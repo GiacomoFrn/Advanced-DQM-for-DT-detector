@@ -1,7 +1,8 @@
-from s3fs.core import S3FileSystem
-import pandas as pd
 import os
 import time
+
+import pandas as pd
+from s3fs.core import S3FileSystem
 
 
 class StreamReader:
