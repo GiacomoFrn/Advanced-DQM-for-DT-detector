@@ -40,16 +40,6 @@
 
     `git branch -vv`
 
-I have created a new branch "dataset_script" in which I will upload the script I am refining. Once it will be fully
-operational I will merge the branch with the main branch.
-
-Whenever you will be developing code, please create a different branch (with a meaningful name) and request for the
-merging with main once you have completed it.
-
-I'm not sure whether you are enabled to create branches in the upstream or only I have the permession to do so. In the
-latter case, just create a new branch in your own fork and ask me to create a new branch in the upstream whenever you
-want to submit your code to the others.
-
 ## Git Development Cycle
 
 1. Sync the main branch that will have the latest completed code:
@@ -60,35 +50,24 @@ want to submit your code to the others.
 
    `git merge upstream/main`
 
-2. Sync the branch you are working in:
-
-   `git checkout <BranchName>`
-
-   `git fetch upstream <BranchName>`
-
-   `git merge upstream/<BranchName>`
-
-3. Before starting to code in your machine make sure everything is up to date:
+2. Before starting to code in your machine make sure everything is up to date:
 
     `git pull`
 
-4. If you need some code that has been moved to the main then merge the main branch in your working branch:
+3. ***Now you can start developing code***
 
-   `git merge main`
-
-5. ***Now you can start developing code***
-
-6. Add files you want to commit (DO NOT add data files, weird folders and junk files):
+4. Add files you want to commit (DO NOT add data files, weird folders and junk files):
 
     `git add <NewFile>`
 
-7. Commit the tracked changes:
+5. Commit the tracked changes:
 
     `git commit -m "<MeaningfulMessage>"`
 
-8. Push local changes into *your* remote repository on github (`origin`):
+6. Push local changes into *your* remote repository on github (`origin`):
 
-    `git push origin <BranchName>`
+    `git push origin main`
 
-9. Once you finished a specific task, or reached an important point where you want the other members to have your code,
-   then propagate your changes to this repository (`upstream`) via pull request on GitHub.
+7. Push local changes into the `upstream` repository:
+
+    `git push upstream main`
