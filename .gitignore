@@ -1,6 +1,9 @@
 # Data folder
 data/
 
+# Vscode
+.vscode/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

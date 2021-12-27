@@ -1,10 +1,5 @@
 from constants import XCELL, X_POS_SHIFT, Z_POS_SHIFT
 
-"""
-    DA RIVEDERE
-"""
-
-
 class Mapping(object):
     def __init__(self, cfg):
         self.cfg = cfg
@@ -14,8 +9,8 @@ class Mapping(object):
         Add columns with SL, LAYER, WIRE_NUM, WIRE_POS
         for local coordinates
         Args:
-            - df: Pandas dataframe of hits
-            - cfg: configuration dict for this run
+            - df  : Pandas dataframe of hits
+            - cfg : configuration dict for this run
         """
 
         # assing SL to each hit
@@ -57,8 +52,8 @@ class Mapping(object):
         Create global coordinates based on the SL geometry
         adopted in the selected run
         Args:
-            - df: Pandas dataframe of hits
-            - cfg: configuration dict for this run
+            - df  : Pandas dataframe of hits
+            - cfg : configuration dict for this run
         """
         # build the map for each sl
         df = self.sl_map(df)
