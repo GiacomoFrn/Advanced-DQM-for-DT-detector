@@ -42,8 +42,8 @@ def linear_reg(X, Y):
 from itertools import combinations
 
 
-def compute(df, useTrigger):  # DA OTTIMIZZARE E SNELLIRE (molto)
-
+def compute(df, useTrigger):  # DA OTTIMIZZARE E SNELLIRE
+    
     comb = []
     if len(df.LAYER.unique()) == 3:
         comb.append(df)

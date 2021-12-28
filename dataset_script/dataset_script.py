@@ -1,9 +1,7 @@
-import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
 import yaml
 import math
-import h5py
 import warnings
 import argparse
 
@@ -14,6 +12,21 @@ warnings.filterwarnings("ignore")
 from eventsFactory import getEvents
 from reco import getRecoResults
 
+"""USAGE:
+
+    python dataset_script.py -i <input_data_directory> -o <output_data_directory> -c <config_directory> -run <last_4_digits_of_run
+    
+    The I/O directories should be ../data/ (as default)
+    
+    The configuration directories should be ../config/ (as default)
+    
+    NOTE that data and config files should be named accordingly
+    
+    EXAMPLE: 
+    
+    python dataset_script.py -run 1231 
+    
+"""
 
 # CONSTANTS
 USE_TRIGGER = False
@@ -68,7 +81,7 @@ def buildDataframe(stream_df, cfg):
 
     # rad to deg conversion
     df["THETA"] = np.arctan(df["m"]) * 180.0 / math.pi
-    
+
     print("Dataframe ready!")
 
     return df

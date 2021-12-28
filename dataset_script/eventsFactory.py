@@ -97,7 +97,7 @@ def getEvents(stream_df, cfg, runTimeShift, useTrigger):
 
     # map hits
     hits_df = mapper.global_map(hits_df)
-    
+
     # select all orbits with a trigger signal from
     # the scintillators coincidence
     trigger_df = stream_df[
@@ -105,10 +105,10 @@ def getEvents(stream_df, cfg, runTimeShift, useTrigger):
         (stream_df["FPGA"] == cfg["scintillator"]["fpga"]) & 
         (stream_df["TDC_CHANNEL"] == cfg["scintillator"]["tdc_ch"])
     ].copy()
-    
+
     # create a T0 column (in ns)
     trigger_df["T0"] = (trigger_df["BX_COUNTER"] + trigger_df["TDC_MEAS"] / 30)
-    
+
     # select only hits in the same orbit of a scint trigger signal
     hits_df_ = pd.merge(
         hits_df, trigger_df[["ORBIT_CNT","T0"]],
@@ -117,12 +117,12 @@ def getEvents(stream_df, cfg, runTimeShift, useTrigger):
     )
     # print the number of valid hits found in data
     print(f"Valid hits: {hits_df_.shape[0]}")
-    
+
     # if true consider only the hits in the same orbit of a scint trigger AND FPGA trigger signals
     if (useTrigger == True):
         hits_df_ = usingTrigger(stream_df=stream_df, hits_df_=hits_df_, cfg=cfg)
 
-        
+
     # TIME SHIFTING
     # apply scintillator calibration -> they shoul be computed
     # for each run! For this example run, values are provided in
@@ -137,14 +137,10 @@ def getEvents(stream_df, cfg, runTimeShift, useTrigger):
         hits_df_.loc[
             hits_df_["SL"] == sl, "T0_NS"
         ] -= cfg["time_offset_scint"] -runTimeShift + offset_sl # 6 for 123, 8 for 0
-    
+
     # having the time allows us to compute hit position 
     # with left / right ambiguity
 
     hits_df_ = map_hit_position(hits_df_, local=False)
-    
-    # create a list of event (an event is a group of hits all in the same orbit
-    # the probability of multiples hits in the same orbit is very low)
-    events = computeEvents(hits_df_)
-        
-    return events
+
+    return computeEvents(hits_df_)
