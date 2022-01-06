@@ -26,7 +26,9 @@
 
 5. Define this repo as the upstream repository:
 
-   `git remote add upstream https://github.com/niklai99/LCP_modA_finalProject.git`
+   `git remote add upstream https://<YourToken>@github.com/niklai99/LCP_modA_finalProject.git`
+
+   Remember that in order to be able to push to the upstream you must be a contributor to this repo
 
 6. Check
 
