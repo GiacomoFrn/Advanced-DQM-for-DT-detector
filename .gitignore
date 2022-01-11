@@ -1,6 +1,9 @@
 # Data folder
 data/
 
+# Login
+infn_login.txt
+
 # Vscode
 .vscode/
 .DS_Store
