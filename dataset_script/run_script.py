@@ -1,7 +1,5 @@
 import os
 import argparse
-import numpy as np
-import glob
 import os.path
 import time
 
@@ -28,7 +26,7 @@ python run_condor_script.py
 def argParser():
     """manages command line arguments"""
 
-        parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser()
     parser.add_argument(
         "-i", "--input", type=str, default="../data/", help="input data directory"
     )
