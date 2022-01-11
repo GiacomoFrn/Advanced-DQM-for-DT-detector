@@ -47,7 +47,7 @@ def argParser():
     parser.add_argument(
         "-c", "--config", type=str, default="../config/", help="config directory"
     )
-    parser.add_argument("-run", "--run", type=int, default=1252, help="run number")
+    parser.add_argument("-run", "--run", type=int, default=1231, help="run number")
 
     return parser.parse_args()
 

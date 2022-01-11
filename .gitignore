@@ -1,3 +1,6 @@
+# Condor folders
+condor_jobs/
+
 # Data folder
 data/
 
