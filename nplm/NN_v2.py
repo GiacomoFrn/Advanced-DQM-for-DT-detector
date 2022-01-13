@@ -36,7 +36,7 @@ class BSMfinder(Model):
         self.build(input_shape)
         
     def call(self, x):
-        for i, hidden_layer in enumerate(self.hidden_layers):
+        for hidden_layer in self.hidden_layers:
             x = hidden_layer(x)
         x = self.output_layer(x)
         return x
@@ -49,8 +49,8 @@ class NPLMupgrade(Model):
         if (len(edgebinlist)!= len(binned_features) or  len(edgebinlist)!= len(means)  or len(means)!= len(binned_features)) and correction!='AN':
             logging.error('length of binned_features, means and edgebinlist must be the same')
             exit()
-        if not correction in ['LI', 'BIN', 'PAR', 'AN']:
-            logging.error("value %s for binning is not valid. Choose between '1D', '2D' and 'PAR' "%(binning))
+        if correction not in ['LI', 'BIN', 'PAR', 'AN']:
+            logging.error("value for binning is not valid. Choose between '1D', '2D' and 'PAR' ")
             exit()
         if correction=='BIN' and len(edgebinlist)!=1:
             logging.error('BIN requires one element in edgebinlist and coefficient matrices')
@@ -58,7 +58,7 @@ class NPLMupgrade(Model):
         if correction=='LI' and len(edgebinlist)!=1:
             logging.error('LI requires one element in edgebinlist and points')
             exit()
-        if correction=='PAR' and ParNet_weights==None:
+        if correction == 'PAR' and ParNet_weights is None:
             logging.error("missing argument ParNet_weights required with 'PAR' correction")
             exit()
         if correction=='LI':
@@ -112,7 +112,7 @@ class NPLMupgrade(Model):
         if train_f:
             self.f    = BSMfinder(input_shape, architecture, weight_clipping)
         self.N_Bkg   = N_Bkg
-        self.train_f = train_f 
+        self.train_f = train_f
         self.correction = correction
         self.newpar = newpar
         self.build(input_shape)
@@ -127,15 +127,19 @@ class NPLMupgrade(Model):
 
         Lratio  = 0
         if self.correction in ['LI', 'BIN']:
-            oi = []
-            for i in range(len(self.binned_features)):
-                oi.append(self.oi_layers[0].call(x[:, self.binned_features[i]:self.binned_features[i]+1]))
+            oi = [
+                self.oi_layers[0].call(
+                    x[:, self.binned_features[i] : self.binned_features[i] + 1]
+                )
+                for i in range(len(self.binned_features))
+            ]
+
             ei      = self.N_Bkg * self.expectation_layers[0].call(self.nu[0:1, 0:1]-1)*(nu[1])
             eiR     = self.N_Bkg * self.expectation_layers[0].call(self.nuR[0:1, 0:1]-1)*(nuR[1])
             #if self.correction=='1D':
             Lratio = tf.matmul(oi[0], tf.math.log(ei/eiR))
-            #elif self.correction=='2D':
-                #Lratio = tf.reduce_sum(tf.multiply(tf.matmul(oi[1], tf.math.log(ei/eiR)), oi[0]), axis=1, keepdims=True)
+                #elif self.correction=='2D':
+                    #Lratio = tf.reduce_sum(tf.multiply(tf.matmul(oi[1], tf.math.log(ei/eiR)), oi[0]), axis=1, keepdims=True)
         if self.correction == 'PAR':
             delta   = self.Delta.call(x)
             nus_std = (nu[0]-1)/self.Delta_sb
