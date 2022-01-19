@@ -3,23 +3,27 @@ from ReadStream import StreamReader
 
 """ USAGE:
 
-    python download_data.py -o <output_data_directory> -run <last_4_digits_of_run> -n <number_of_files_to_read>
+    python download_data.py -o <output_data_directory> -run <last_4_digits_of_run> 
+    -n <number_of_files_to_read> -format <upper or lower>
 
     The output data directory should be ../data/ unless you want to save data somewhere else (not recommended). 
     The ../data/ folder will be created while running this script the first time, and it has already been added to .gitignore!
 
 
-    Example: to download the whole RUN001252 into the ../data/ folder simply type
+    Example: to download the old data RUN001231
 
-    python download_data.py -run 0054
+    python download_data.py -run 1231 -format upper
 
 
     Example: to download a small portion of RUN001252 into the ../data/ folder simply type
 
-    python download_data.py -run 0054 -n 20
+    python download_data.py -run 1252 -n 20 -format upper
 
 
     If you change the output directory please make sure to add the new folder to .gitignore
+    
+    
+    IF data is new data then set -format lower
 
 """
 
@@ -28,9 +32,18 @@ def argParser():
     """manages command line arguments"""
     
     parser = argparse.ArgumentParser() 
-    parser.add_argument("-o"  , "--output", type=str, default="../data/", help="output directory")
-    parser.add_argument("-run", "--run"   , type=str, default="0054"    , help="run number"      )
-    parser.add_argument("-n"  , "--nfiles", type=int, default=-1        , help="number of files" )
+    parser.add_argument(
+        "-o", "--output", type=str, default="../data/", help="output directory"
+    )
+    parser.add_argument(
+        "-format", "--format", type=str, default="upper", help="CVeneto container format"
+    )
+    parser.add_argument(
+        "-run", "--run", type=str, default="0054", help="run number"
+    )
+    parser.add_argument(
+        "-n", "--nfiles", type=int, default=-1, help="number of files"
+    )
     
     return parser.parse_args()
 
@@ -46,9 +59,10 @@ def main(args):
     RUNNUMBER = args.run
     OUT_PATH  = args.output
     N_FILES   = args.nfiles
+    FORMAT    = args.format 
     
     # create an instance of StreamReader to manage data I/O from CloudVeneto
-    reader = StreamReader(RUNNUMBER, OUT_PATH, N_FILES)
+    reader = StreamReader(RUNNUMBER, OUT_PATH, N_FILES, FORMAT)
     
     # get data from CloudVeneto
     reader.readStream()
