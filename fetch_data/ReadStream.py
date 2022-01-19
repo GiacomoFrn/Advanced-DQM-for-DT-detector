@@ -55,7 +55,7 @@ class StreamReader:
         self.stream_df = pd.concat(
             [
                 pd.read_csv(s3.open(f, mode="rb"), encoding="utf8", engine="python")
-                for f in s3.ls("/RUN00" + str(self.run_number) + "/")[: self.n_files]
+                for f in s3.ls("/Run00" + str(self.run_number) + "/")[: self.n_files]
                 if f.endswith(".txt")
             ],
             ignore_index=True,
