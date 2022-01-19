@@ -14,7 +14,7 @@ from reco import getRecoResults
 
 """USAGE:
 
-    python dataset_script.py -i <input_data_directory> -o <output_data_directory> -c <config_directory> -run <last_4_digits_of_run
+    python dataset_script.py -i <input_data_directory> -o <output_data_directory> -c <config_directory> -run <last_4_digits_of_run>
     
     The I/O directories should be ../data/ (as default)
     
@@ -24,7 +24,7 @@ from reco import getRecoResults
     
     EXAMPLE: 
     
-    python dataset_script.py -run 1231 
+    python dataset_script.py -run 0054 
     
 """
 
@@ -47,7 +47,7 @@ def argParser():
     parser.add_argument(
         "-c", "--config", type=str, default="../config/", help="config directory"
     )
-    parser.add_argument("-run", "--run", type=int, default=1231, help="run number")
+    parser.add_argument("-run", "--run", type=str, default="0054", help="run number")
 
     return parser.parse_args()
 

@@ -2,6 +2,8 @@ import os
 import argparse
 import time
 
+"""CMS CLUSTER ONLY!!!!"""
+
 def argParser():
     '''gestisce gli argomenti passati da linea di comando'''
     

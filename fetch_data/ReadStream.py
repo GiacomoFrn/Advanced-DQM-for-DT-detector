@@ -55,7 +55,8 @@ class StreamReader:
         self.stream_df = pd.concat(
             [
                 pd.read_csv(s3.open(f, mode="rb"), encoding="utf8", engine="python")
-                for f in s3.ls("/Run00" + str(self.run_number) + "/")[: self.n_files]
+                for f in s3.ls("/Run000054/")[:] # HARDCODED TEST
+                # for f in s3.ls("/Run00" + str(self.run_number) + "/")[: self.n_files]
                 if f.endswith(".txt")
             ],
             ignore_index=True,
@@ -79,4 +80,4 @@ class StreamReader:
         start_save_time = time.process_time()
         self.stream_df.to_csv(self.output_file, index=False, header=True)
         save_time = time.process_time() - start_save_time
-        print(f"Saving completed in {save_time:.2f}")
+        print(f"Saving completed in {save_time:.2f} seconds")
