@@ -15,16 +15,21 @@ from ReadStream import StreamReader
     python download_data.py -run 1231 -format upper
 
 
-    Example: to download a small portion of RUN001252 into the ../data/ folder simply type
+    Example: to download a small portion of RUN001231 into the ../data/ folder simply type
 
-    python download_data.py -run 1252 -n 20 -format upper
+    python download_data.py -run 1231 -n 20 -format upper
+    
+    
+    IF data is NEW data then set -format lower
+    
+    Example: to download the new data Run000054
+    
+    python download_data.py -run 0054 -format lower
+    
 
 
     If you change the output directory please make sure to add the new folder to .gitignore
     
-    
-    IF data is new data then set -format lower
-
 """
 
 
