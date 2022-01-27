@@ -50,6 +50,6 @@ class DataReader:
         # random data extraction from the whole dataset
         df = self.df.sample(n=ndata)
         
-        return df["drift_time", "theta"] 
+        return df[["drift_time", "theta"]] 
 
 
