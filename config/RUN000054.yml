@@ -21,10 +21,10 @@ scintillator:
   tdc_ch: 128
 time_offset_scint: 143.6
 time_offset_sl:
-  0: 0
-  1: 0
-  2: 0
-  3: 0
+  0: 0 #3
+  1: 0 #4.5
+  2: 0 #-7.5
+  3: 0 # -5.5
   
 # shift of the SL (x, y, z)
 sl_shift:
