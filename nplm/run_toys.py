@@ -4,10 +4,11 @@ import argparse
 import numpy as np
 import glob
 import os.path
+import datetime
 import time
 from config_utils import parNN_list
 
-OUTPUT_DIRECTORY = './'
+OUTPUT_DIRECTORY = '/lustre/cmswork/nlai/lcp-moda/nplm'
 
 def create_config_file(config_table, OUTPUT_DIRECTORY):
     with open('%s/config.json'%(OUTPUT_DIRECTORY), 'w') as outfile:
@@ -24,7 +25,7 @@ config_json = {
     "shape_nuisances_data":      [0],#[0],
     "shape_nuisances_reference": [0],
     "shape_nuisances_sigma":     [0], 
-    "shape_dictionary_list":     [parNN_list['']],
+    "shape_dictionary_list":     [parNN_list['scale']],
     "norm_nuisances_data":       0,
     "norm_nuisances_reference":  0,
     "norm_nuisances_sigma":      0,
@@ -32,7 +33,7 @@ config_json = {
     "patience_tau": 1000,
     "epochs_delta": 0,
     "patience_delta": 0,
-    "BSMarchitecture": [1,4,1],
+    "BSMarchitecture": [2,4,1],
     "BSMweight_clipping": 9, 
     "correction": "", # "SHAPE", "NORM", ""
 }
@@ -100,12 +101,14 @@ if __name__ == '__main__':
         print('!!! or activate your personal environment before                                             !!!')
         os.system("python %s/%s -j %s" %(os.getcwd(), pyscript, json_path))
     else:
-        label = "folder-log-jobs"
+        label = "jobs"+str(time.time())
         os.system("mkdir %s" %label)
         for i in range(ntoys):
             with open("%s/%i.src" %(label, i) , 'w') as script_src:
                 script_src.write("#!/bin/bash\n")
-                script_src.write('eval "$(/lustre/cmswork/nlai/anaconda/bin/conda shell.bash hook)" \n')
+                script_src.write('eval "$(/lustre/cmswork/nlai/anaconda/bin/conda shell.bash hook)"\n')
+                script_src.write('conda activate nplm\n')
+                # script_src.write('source ../env/bin/activate\n')
                 script_src.write("python %s/%s -j %s" %(os.getcwd(), args.pyscript, json_path))
             os.system("chmod a+x %s/%i.src" %(label, i))
             with open("%s/%i.condor" %(label, i) , 'w') as script_condor:

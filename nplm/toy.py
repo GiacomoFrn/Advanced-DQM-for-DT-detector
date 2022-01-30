@@ -19,9 +19,12 @@ from NPLM.PLOTutils import *
 from DataReader import DataReader
 
 
-def read_data(file_name: str, n_data: int):
+def read_data(file_name, n_data):
     '''legge la distribuzione da un file'''
     return DataReader(filename=file_name).build_sample(ndata=n_data)
+
+DATA_FOLDER = "/lustre/cmswork/nlai/lcp-moda/data/"
+DATA_FILE   = "RUN000054_channels.h5"
 
 parser = argparse.ArgumentParser()    
 parser.add_argument('-j', '--jsonfile'  , type=str, help="json file", required=True)
@@ -44,7 +47,7 @@ N_D        = N_Bkg
 
 #### nuisance parameters configuration   
 correction= config_json["correction"]
-NU_S, NUR_S, NU0_S, SIGMA_S = [], [], [], []
+NU_S, NUR_S, NU0_S, SIGMA_S = [0], [0], [0], [0]
 NU_N, NUR_N, NU0_N, SIGMA_N = 0, 0, 0, 0
 shape_dictionary_list = []
 
@@ -88,13 +91,13 @@ if N_Sig:
     N_Sig_Pois = np.random.poisson(lam=N_Sig*np.exp(Norm), size=1)[0]
 
 # featureData = np.random.exponential(scale=np.exp(1*Scale), size=(N_Bkg_Pois, 1))
-featureData = read_data(file_name='../data/RUN00054_channels.h5', n_data=N_Bkg_Pois)
+featureData = read_data(file_name=DATA_FOLDER+DATA_FILE, n_data=N_Bkg_Pois)
 
 if N_Sig:
     featureSig  = np.random.normal(loc=6.4, scale=0.16, size=(N_Sig_Pois,1))*np.exp(Scale)
     featureData = np.concatenate((featureData, featureSig), axis=0)
     
-featureRef  = read_data(file_name='../data/RUN00054_channels.h5', n_data=N_ref)
+featureRef  = read_data(file_name=DATA_FOLDER+DATA_FILE, n_data=N_ref)
 
 feature     = np.concatenate((featureData, featureRef), axis=0)
 
@@ -159,8 +162,8 @@ tau.save_weights(log_weights)
 delta = imperfect_model(input_shape=(None, inputsize),
                       NU_S=NU_S, NUR_S=NUR_S, NU0_S=NU0_S, SIGMA_S=SIGMA_S, 
                       NU_N=NU_N, NUR_N=NUR_N, NU0_N=NU0_N, SIGMA_N=SIGMA_N,
-                      correction=correction, shape_dictionary_list=shape_dictionary_list,
-                      BSMarchitecture=BSMarchitecture, BSMweight_clipping=BSMweight_clipping, train_f=False, train_nu=True)
+                      correction=correction, #shape_dictionary_list=shape_dictionary_list,
+                      BSMarchitecture=BSMarchitecture, BSMweight_clipping=BSMweight_clipping, train_f=False, train_nu=False)
 
 print(delta.summary())
 opt  = tf.compat.v1.train.GradientDescentOptimizer(learning_rate=0.0000001)

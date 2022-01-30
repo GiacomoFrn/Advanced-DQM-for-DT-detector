@@ -3,3 +3,5 @@ numpy==1.18
 scipy==1.4.1
 matplotlib==3.3.3
 h5py
+pandas
+scipy
