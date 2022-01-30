@@ -4,6 +4,7 @@ import os.path
 import time
 
 """
+CMS CLUSTER ONLY!!!!
 
 Python script that uses condor to exploit the CPU cluster (available only through t2-ui-12 machine via ssh) to distribute jobs to different computing resources.
 

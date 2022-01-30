@@ -8,17 +8,24 @@ from s3fs.core import S3FileSystem
 class StreamReader:
     """manages data I/O from CloudVeneto"""
 
-    def __init__(self, run_number: int, output_path: str, n_files: int):
+    def __init__(self, run_number: int, output_path: str, n_files: int, format: str):
         """
         run_number  : idientifies the detector's run - only the last 4 digits are needed
         output_path : directory where data is to be saved
         n_files     : number of files to read from CloudVeneto (usually -1 to get the whole run)
+        format      : CVeneto container format (RUN00xxxx or Run00xxxx)
         """
 
         # initialize instance attributes
-        self.run_number = run_number
+        self.run_number  = run_number
         self.output_path = output_path
-        self.n_files = n_files
+        self.n_files     = n_files
+        
+        # select which format to use when reading data from CloudVeneto
+        if format == "upper":           # old data
+            self.run_format = "RUN00"
+        elif format == "lower":         # new data
+            self.run_format = "Run00"
 
         # generate the data file path and name
         self.output_file = self.output_path + f"RUN00{self.run_number}_data.txt"
@@ -49,13 +56,13 @@ class StreamReader:
             )
 
         # read data files from CloudVeneto
-        print("\nReading data files...")
+        print(f"\nReading data files from /{self.run_format + self.run_number}/ ...")
         start_read_time = time.process_time()
         # concatenate all data files into a single dataframe
         self.stream_df = pd.concat(
             [
                 pd.read_csv(s3.open(f, mode="rb"), encoding="utf8", engine="python")
-                for f in s3.ls("/RUN00" + str(self.run_number) + "/")[: self.n_files]
+                for f in s3.ls("/" + self.run_format + self.run_number + "/")[: self.n_files]
                 if f.endswith(".txt")
             ],
             ignore_index=True,
@@ -79,4 +86,4 @@ class StreamReader:
         start_save_time = time.process_time()
         self.stream_df.to_csv(self.output_file, index=False, header=True)
         save_time = time.process_time() - start_save_time
-        print(f"Saving completed in {save_time:.2f}")
+        print(f"Saving completed in {save_time:.2f} seconds")
