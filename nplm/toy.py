@@ -25,12 +25,13 @@ def read_data(file_name, n_data):
 
 
 parser = argparse.ArgumentParser()    
-parser.add_argument('-j', '--jsonfile'  , type=str, help="json file", required=True)
-parser.add_argument('-r', '--run'  ,      type=str, help="run number", required=True)
+parser.add_argument('-j', '--jsonfile', type=str, help="json file",  required=True)
+parser.add_argument('-r', '--run',      type=str, help="run number", required=True)
 args = parser.parse_args()
 
 DATA_FOLDER = "/lustre/cmswork/nlai/lcp-moda/data/"
 DATA_FILE   = f"RUN00{args.run}_channels.h5"
+REFERENCE_FILE = "RUN000054_channels.h5"
 
 #### set up parameters ###############################
 with open(args.jsonfile, 'r') as jsonfile:
@@ -100,7 +101,7 @@ if N_Sig:
     featureData = np.concatenate((featureData, featureSig), axis=0)
 
 # featureRef = np.random.exponential(scale=np.exp(1*Scale), size=(N_ref, 1))
-featureRef  = read_data(file_name=DATA_FOLDER+DATA_FILE, n_data=N_ref)
+featureRef  = read_data(file_name=DATA_FOLDER+REFERENCE_FILE, n_data=N_ref)
 
 feature     = np.concatenate((featureData, featureRef), axis=0)
 

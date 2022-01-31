@@ -18,22 +18,22 @@ def create_config_file(config_table, OUTPUT_DIRECTORY):
 # configuration dictionary
 config_json = {
     "N_Ref"   : 200000,
-    "N_Bkg"   : 5000,
+    "N_Bkg"   : 10000,
     "N_Sig"   : 0,
     "output_directory": OUTPUT_DIRECTORY,
     "shape_nuisances_id":        [''],
-    "shape_nuisances_data":      [0],#[0],
+    "shape_nuisances_data":      [0],
     "shape_nuisances_reference": [0],
     "shape_nuisances_sigma":     [0], 
     "shape_dictionary_list":     [parNN_list['scale']],
     "norm_nuisances_data":       0,
     "norm_nuisances_reference":  0,
     "norm_nuisances_sigma":      0,
-    "epochs_tau": 300000,
+    "epochs_tau": 50000,
     "patience_tau": 1000,
     "epochs_delta": 0,
     "patience_delta": 0,
-    "BSMarchitecture": [2,3,3,1],
+    "BSMarchitecture": [2,3, 3,1],
     "BSMweight_clipping": 1, 
     "correction": "", # "SHAPE", "NORM", ""
 }

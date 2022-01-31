@@ -17,6 +17,8 @@ def change_legend(ax, new_loc, fontsize, titlesize, **kws):
 
     return
 
+
+
 # -------- FULL DATASETS
 
 
@@ -145,6 +147,7 @@ def plot_full_scatter(df, features):
     df.drop(labels="bin", axis=1, inplace=True)
     
     return fig, ax
+
 
 
 # ------- NPLM Datasets
