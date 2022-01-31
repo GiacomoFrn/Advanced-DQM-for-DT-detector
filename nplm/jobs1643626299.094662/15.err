@@ -1,5 +1,0 @@
-2022-01-31 11:52:04.436648: I tensorflow/core/platform/cpu_feature_guard.cc:142] This TensorFlow binary is optimized with oneAPI Deep Neural Network Library (oneDNN)to use the following CPU instructions in performance-critical operations:  SSE4.1 SSE4.2 AVX
-To enable them in other operations, rebuild TensorFlow with the appropriate compiler flags.
-2022-01-31 11:52:04.453371: I tensorflow/core/platform/profile_utils/cpu_utils.cc:104] CPU Frequency: 2099945000 Hz
-2022-01-31 11:52:04.456435: I tensorflow/compiler/xla/service/service.cc:168] XLA service 0x55997fd30860 initialized for platform Host (this does not guarantee that XLA will be used). Devices:
-2022-01-31 11:52:04.456498: I tensorflow/compiler/xla/service/service.cc:176]   StreamExecutor device (0): Host, Default Version
