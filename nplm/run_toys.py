@@ -6,7 +6,7 @@ import glob
 import os.path
 import datetime
 import time
-from config_utils import parNN_list
+from modules.config_utils import parNN_list
 
 OUTPUT_DIRECTORY = '/lustre/cmswork/nlai/lcp-moda/nplm'
 
@@ -33,8 +33,8 @@ config_json = {
     "patience_tau": 1000,
     "epochs_delta": 0,
     "patience_delta": 0,
-    "BSMarchitecture": [2,3, 3,1],
-    "BSMweight_clipping": 1, 
+    "BSMarchitecture": [2,3,3,1],
+    "BSMweight_clipping": 10, 
     "correction": "", # "SHAPE", "NORM", ""
 }
 
