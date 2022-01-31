@@ -23,12 +23,14 @@ def read_data(file_name, n_data):
     '''legge la distribuzione da un file'''
     return DataReader(filename=file_name).build_sample(ndata=n_data)
 
-DATA_FOLDER = "/lustre/cmswork/nlai/lcp-moda/data/"
-DATA_FILE   = "RUN000054_channels.h5"
 
 parser = argparse.ArgumentParser()    
 parser.add_argument('-j', '--jsonfile'  , type=str, help="json file", required=True)
+parser.add_argument('-r', '--run'  ,      type=str, help="run number", required=True)
 args = parser.parse_args()
+
+DATA_FOLDER = "/lustre/cmswork/nlai/lcp-moda/data/"
+DATA_FILE   = f"RUN00{args.run}_channels.h5"
 
 #### set up parameters ###############################
 with open(args.jsonfile, 'r') as jsonfile:
@@ -96,18 +98,29 @@ featureData = read_data(file_name=DATA_FOLDER+DATA_FILE, n_data=N_Bkg_Pois)
 if N_Sig:
     featureSig  = np.random.normal(loc=6.4, scale=0.16, size=(N_Sig_Pois,1))*np.exp(Scale)
     featureData = np.concatenate((featureData, featureSig), axis=0)
-    
+
+# featureRef = np.random.exponential(scale=np.exp(1*Scale), size=(N_ref, 1))
 featureRef  = read_data(file_name=DATA_FOLDER+DATA_FILE, n_data=N_ref)
 
 feature     = np.concatenate((featureData, featureRef), axis=0)
 
-# target                    
-targetData  = np.ones_like(featureData)
-targetRef   = np.zeros_like(featureRef)
-weightsData = np.ones_like(featureData)
-weightsRef  = np.ones_like(featureRef)*N_D*1./N_R
+# target     
+
+# targetData  = np.ones_like(featureData)
+# targetRef   = np.zeros_like(featureRef)
+# weightsData = np.ones_like(featureData)
+# weightsRef  = np.ones_like(featureRef)*N_D*1./N_R
+# target      = np.concatenate((targetData, targetRef), axis=0)
+# weights     = np.concatenate((weightsData, weightsRef), axis=0)
+# target      = np.concatenate((target, weights), axis=1)
+targetData  = np.ones(featureData.shape[0])
+targetRef   = np.zeros(featureRef.shape[0])
+weightsData = np.ones(featureData.shape[0])
+weightsRef  = np.ones(featureRef.shape[0])*N_D*1./N_R
 target      = np.concatenate((targetData, targetRef), axis=0)
 weights     = np.concatenate((weightsData, weightsRef), axis=0)
+target      = np.expand_dims(target, 1)
+weights     = np.expand_dims(weights, 1)
 target      = np.concatenate((target, weights), axis=1)
 
 batch_size  = feature.shape[0]
@@ -118,7 +131,7 @@ tau = imperfect_model(input_shape=(None, inputsize),
                       NU_S=NU_S, NUR_S=NUR_S, NU0_S=NU0_S, SIGMA_S=SIGMA_S, 
                       NU_N=NU_N, NUR_N=NUR_N, NU0_N=NU0_N, SIGMA_N=SIGMA_N,
                       correction=correction, shape_dictionary_list=shape_dictionary_list,
-                      BSMarchitecture=BSMarchitecture, BSMweight_clipping=BSMweight_clipping, train_f=True, train_nu=True)
+                      BSMarchitecture=BSMarchitecture, BSMweight_clipping=BSMweight_clipping, train_f=True, train_nu=False)
 print(tau.summary())
 tau.compile(loss=imperfect_loss,  optimizer='adam')
 
@@ -158,49 +171,49 @@ f.close()
 log_weights = OUTPUT_PATH+OUTPUT_FILE_ID+'_TAU_weights.h5'
 tau.save_weights(log_weights)
 
-#### training delta ###########################
-delta = imperfect_model(input_shape=(None, inputsize),
-                      NU_S=NU_S, NUR_S=NUR_S, NU0_S=NU0_S, SIGMA_S=SIGMA_S, 
-                      NU_N=NU_N, NUR_N=NUR_N, NU0_N=NU0_N, SIGMA_N=SIGMA_N,
-                      correction=correction, #shape_dictionary_list=shape_dictionary_list,
-                      BSMarchitecture=BSMarchitecture, BSMweight_clipping=BSMweight_clipping, train_f=False, train_nu=False)
-
-print(delta.summary())
-opt  = tf.compat.v1.train.GradientDescentOptimizer(learning_rate=0.0000001)
-delta.compile(loss=imperfect_loss,  optimizer=opt)
-
-t0=time.time()
-hist_delta = delta.fit(feature, target, batch_size=batch_size, epochs=total_epochs_delta, verbose=False)
-t1=time.time()
-print('Training time (seconds):')
-print(t1-t0)
-
-# metrics                      
-loss_delta  = np.array(hist_delta.history['loss'])
-
-# test statistic                                            
-final_loss   = loss_delta[-1]
-delta_OBS    = -2*final_loss
-print('delta_OBS: %f'%(delta_OBS))
-
-# save t                  
-log_t = OUTPUT_PATH+OUTPUT_FILE_ID+'_DELTA.txt'
-out   = open(log_t,'w')
-out.write("%f\n" %(delta_OBS))
-out.close()
-
-# save the training history  
-log_history = OUTPUT_PATH+OUTPUT_FILE_ID+'_DELTA_history.h5'
-f           = h5py.File(log_history,"w")
-epoch       = np.array(range(total_epochs_delta))
-keepEpoch   = epoch % patience_delta == 0
-f.create_dataset('epoch', data=epoch[keepEpoch], compression='gzip')
-for key in list(hist_delta.history.keys()):
-    monitored =np.array(hist_delta.history[key])
-    print('%s: %f'%(key, monitored[-1]))
-    f.create_dataset(key, data=monitored[keepEpoch],   compression='gzip')
-f.close()
-
-# save the model 
-log_weights = OUTPUT_PATH+OUTPUT_FILE_ID+'_DELTA_weights.h5'
-delta.save_weights(log_weights)
+# #### training delta ###########################
+# delta = imperfect_model(input_shape=(None, inputsize),
+#                       NU_S=NU_S, NUR_S=NUR_S, NU0_S=NU0_S, SIGMA_S=SIGMA_S, 
+#                       NU_N=NU_N, NUR_N=NUR_N, NU0_N=NU0_N, SIGMA_N=SIGMA_N,
+#                       correction=correction, shape_dictionary_list=shape_dictionary_list,
+#                       BSMarchitecture=BSMarchitecture, BSMweight_clipping=BSMweight_clipping, train_f=False, train_nu=False)
+# 
+# print(delta.summary())
+# opt  = tf.compat.v1.train.GradientDescentOptimizer(learning_rate=0.0000001)
+# delta.compile(loss=imperfect_loss,  optimizer=opt)
+# 
+# t0=time.time()
+# hist_delta = delta.fit(feature, target, batch_size=batch_size, epochs=total_epochs_delta, verbose=False)
+# t1=time.time()
+# print('Training time (seconds):')
+# print(t1-t0)
+# 
+# # metrics                      
+# loss_delta  = np.array(hist_delta.history['loss'])
+# 
+# # test statistic                                            
+# final_loss   = loss_delta[-1]
+# delta_OBS    = -2*final_loss
+# print('delta_OBS: %f'%(delta_OBS))
+# 
+# # save t                  
+# log_t = OUTPUT_PATH+OUTPUT_FILE_ID+'_DELTA.txt'
+# out   = open(log_t,'w')
+# out.write("%f\n" %(delta_OBS))
+# out.close()
+# 
+# # save the training history  
+# log_history = OUTPUT_PATH+OUTPUT_FILE_ID+'_DELTA_history.h5'
+# f           = h5py.File(log_history,"w")
+# epoch       = np.array(range(total_epochs_delta))
+# keepEpoch   = epoch % patience_delta == 0
+# f.create_dataset('epoch', data=epoch[keepEpoch], compression='gzip')
+# for key in list(hist_delta.history.keys()):
+#     monitored =np.array(hist_delta.history[key])
+#     print('%s: %f'%(key, monitored[-1]))
+#     f.create_dataset(key, data=monitored[keepEpoch],   compression='gzip')
+# f.close()
+# 
+# # save the model 
+# log_weights = OUTPUT_PATH+OUTPUT_FILE_ID+'_DELTA_weights.h5'
+# delta.save_weights(log_weights)

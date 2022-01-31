@@ -1,0 +1,3 @@
+2022-01-31 11:53:40.156720: I tensorflow/core/platform/profile_utils/cpu_utils.cc:104] CPU Frequency: 2200130000 Hz
+2022-01-31 11:53:40.159180: I tensorflow/compiler/xla/service/service.cc:168] XLA service 0x556fe95aacb0 initialized for platform Host (this does not guarantee that XLA will be used). Devices:
+2022-01-31 11:53:40.159320: I tensorflow/compiler/xla/service/service.cc:176]   StreamExecutor device (0): Host, Default Version

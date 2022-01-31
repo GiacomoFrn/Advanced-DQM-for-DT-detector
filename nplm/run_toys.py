@@ -18,7 +18,7 @@ def create_config_file(config_table, OUTPUT_DIRECTORY):
 # configuration dictionary
 config_json = {
     "N_Ref"   : 200000,
-    "N_Bkg"   : 3000,
+    "N_Bkg"   : 5000,
     "N_Sig"   : 0,
     "output_directory": OUTPUT_DIRECTORY,
     "shape_nuisances_id":        [''],
@@ -29,12 +29,12 @@ config_json = {
     "norm_nuisances_data":       0,
     "norm_nuisances_reference":  0,
     "norm_nuisances_sigma":      0,
-    "epochs_tau": 100000,
+    "epochs_tau": 300000,
     "patience_tau": 1000,
     "epochs_delta": 0,
     "patience_delta": 0,
-    "BSMarchitecture": [2,4,1],
-    "BSMweight_clipping": 9, 
+    "BSMarchitecture": [2,3,3,1],
+    "BSMweight_clipping": 1, 
     "correction": "", # "SHAPE", "NORM", ""
 }
 
@@ -73,8 +73,8 @@ if config_json["correction"]=='NORM':
     correction_details += 'nuN'+ str(config_json["norm_nuisances_data"])+'_'
 elif config_json["correction"]=='SHAPE':
     correction_details += 'nuN'+ str(config_json["norm_nuisances_data"])+'_'
-ID =str(n_dimensions)+'D/'+correction_details+'Nbkg'+str(config_json["N_Bkg"])+'_Nsig'+str(config_json["N_Sig"])
-ID+='_epochsTau'+str(config_json["epochs_tau"])+'_epochsDelta'+str(config_json["epochs_delta"])
+ID =str(n_dimensions)+'D/'+correction_details+'Nref'+str(config_json["N_Ref"])+'_Ndata'+str(config_json["N_Bkg"])
+ID+='_epochsTau'+str(config_json["epochs_tau"])
 ID+='_arc'+str(config_json["BSMarchitecture"]).replace(', ', '_').replace('[', '').replace(']', '')+'_wclip'+str(config_json["BSMweight_clipping"])
 
 
@@ -84,14 +84,17 @@ if __name__ == '__main__':
     parser.add_argument('-p','--pyscript', type=str, help="name of python script to execute", required=True)
     parser.add_argument('-l','--local',    type=int, help='if to be run locally',             required=False, default=0)
     parser.add_argument('-t', '--toys',    type=int, help="number of toys to be processed",   required=False, default = 100)
+    parser.add_argument('-r', '--run',     type=str, help="run number",                       required=False, default = "0054")
     args     = parser.parse_args()
     ntoys    = args.toys
     pyscript = args.pyscript
+    run_num  = args.run
     config_json['pyscript'] = pyscript
+    config_json['run']      = run_num 
 
     pyscript_str = pyscript.replace('.py', '')
     pyscript_str = pyscript_str.replace('_', '/')
-    config_json["output_directory"] = OUTPUT_DIRECTORY+'/'+pyscript_str+'/'+ID
+    config_json["output_directory"] = OUTPUT_DIRECTORY+'/'+run_num+'/'+ID
     if not os.path.exists(config_json["output_directory"]):
         os.makedirs(config_json["output_directory"])
 
@@ -109,7 +112,7 @@ if __name__ == '__main__':
                 script_src.write('eval "$(/lustre/cmswork/nlai/anaconda/bin/conda shell.bash hook)"\n')
                 script_src.write('conda activate nplm\n')
                 # script_src.write('source ../env/bin/activate\n')
-                script_src.write("python %s/%s -j %s" %(os.getcwd(), args.pyscript, json_path))
+                script_src.write("python %s/%s -j %s -r %s" %(os.getcwd(), args.pyscript, json_path, run_num))
             os.system("chmod a+x %s/%i.src" %(label, i))
             with open("%s/%i.condor" %(label, i) , 'w') as script_condor:
                 script_condor.write("executable = %s/%i.src\n" %(label, i))

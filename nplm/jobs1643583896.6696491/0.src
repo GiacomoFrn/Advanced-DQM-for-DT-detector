@@ -1,4 +1,0 @@
-#!/bin/bash
-eval "$(/lustre/cmswork/nlai/anaconda/bin/conda shell.bash hook)"
-conda activate nplm
-python /lustre/cmswork/nlai/lcp-moda/nplm/toy.py -j /lustre/cmswork/nlai/lcp-moda/nplm/toy/2D/Nbkg3000_Nsig0_epochsTau100000_epochsDelta0_arc2_4_1_wclip9/config.json

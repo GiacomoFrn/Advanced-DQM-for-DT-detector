@@ -1,0 +1,8 @@
+executable = jobs1643626299.094662/12.src
+universe = vanilla
+output = jobs1643626299.094662/12.out
+error =  jobs1643626299.094662/12.err
+log = jobs1643626299.094662/12.log
++MaxRuntime = 500000
+requirements = (OpSysAndVer =?= "CentOS7")
+queue
