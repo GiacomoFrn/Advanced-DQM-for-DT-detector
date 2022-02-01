@@ -29,12 +29,12 @@ config_json = {
     "norm_nuisances_data":       0,
     "norm_nuisances_reference":  0,
     "norm_nuisances_sigma":      0,
-    "epochs_tau": 50000,
+    "epochs_tau": 100000,
     "patience_tau": 1000,
     "epochs_delta": 0,
     "patience_delta": 0,
     "BSMarchitecture": [2,3,3,1],
-    "BSMweight_clipping": 10, 
+    "BSMweight_clipping": 5, 
     "correction": "", # "SHAPE", "NORM", ""
 }
 
