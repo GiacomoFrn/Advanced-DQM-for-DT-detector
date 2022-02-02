@@ -26,6 +26,13 @@ from ReadStream import StreamReader
     
     python download_data.py -run 0054 -format lower
     
+    
+    IF data is the NEWEST data then set -format lower and -capital 0
+    
+    Example: to download the new data run000057
+    
+    python download_data.py -run 0054 -format lower -capital 0
+    
 
 
     If you change the output directory please make sure to add the new folder to .gitignore
@@ -42,6 +49,9 @@ def argParser():
     )
     parser.add_argument(
         "-format", "--format", type=str, default="upper", help="CVeneto container format"
+    )
+    parser.add_argument(
+        "-capital", "--capital", type=str, default="upper", help="first letter capital or not"
     )
     parser.add_argument(
         "-run", "--run", type=str, default="0054", help="run number"
@@ -65,9 +75,10 @@ def main(args):
     OUT_PATH  = args.output
     N_FILES   = args.nfiles
     FORMAT    = args.format 
+    CAPITAL   = args.capital
     
     # create an instance of StreamReader to manage data I/O from CloudVeneto
-    reader = StreamReader(RUNNUMBER, OUT_PATH, N_FILES, FORMAT)
+    reader = StreamReader(RUNNUMBER, OUT_PATH, N_FILES, FORMAT, CAPITAL)
     
     # get data from CloudVeneto
     reader.readStream()
