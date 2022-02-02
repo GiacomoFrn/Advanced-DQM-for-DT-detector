@@ -121,7 +121,15 @@ def plot_1distribution(t, df, xmin=None, xmax=None, nbins=10, wclip=0, save=Fals
    
     # plot reference chi2
     x = np.linspace(scipy.stats.chi2.ppf(0.0001, df), scipy.stats.chi2.ppf(0.9999, df), 100)
-    ax.plot(x, scipy.stats.chi2.pdf(x, df),'midnightblue', lw=5, alpha=0.8, label=r'Target $\chi^2$(ndf='+str(df)+')')
+    ax.plot(
+        x, 
+        scipy.stats.chi2.pdf(x, df),
+        'midnightblue', 
+        lw=5, 
+        alpha=0.8, 
+        label=r'Target $\chi^2$(ndf='+str(df)+')',
+        zorder=10
+    )
     
     
     ax.legend()
