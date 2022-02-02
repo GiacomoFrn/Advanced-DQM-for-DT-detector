@@ -27,11 +27,11 @@ from ReadStream import StreamReader
     python download_data.py -run 0054 -format lower
     
     
-    IF data is the NEWEST data then set -format lower and -capital 0
+    IF data is the NEWEST data then set -format lower and -capital lower
     
     Example: to download the new data run000057
     
-    python download_data.py -run 0054 -format lower -capital 0
+    python download_data.py -run 0054 -format lower -capital lower
     
 
 
