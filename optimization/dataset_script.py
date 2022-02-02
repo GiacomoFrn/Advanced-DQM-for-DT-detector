@@ -60,8 +60,8 @@ def buildDataframe(stream_df, cfg):
     print("Getting events...")
     events = getEvents(stream_df, cfg, RUN_TIME_SHIFT, USE_TRIGGER)
     print("Reconstructing tracks...")
-    resultsList, resultsData, resultsHits, resultsDf = getRecoResults(
-        events, USE_TRIGGER
+    resultsDf = getRecoResults( # editing
+        events
     )
     print("Building dataframe...")
     # out df

@@ -42,7 +42,7 @@ def linear_reg(X, Y):
 from itertools import combinations
 
 
-def compute(df, useTrigger):  # DA OTTIMIZZARE E SNELLIRE
+def compute(df):  # DA OTTIMIZZARE E SNELLIRE
     
     comb = []
     if len(df.LAYER.unique()) == 3:
@@ -55,47 +55,27 @@ def compute(df, useTrigger):  # DA OTTIMIZZARE E SNELLIRE
                 comb.append(tmp_df)  # comb[] contains combinations of data
         tot_Hits = 4
 
-    # saving ORBIT_CNT
-    orbit = np.array(df["ORBIT_CNT"])[0]
-
-    # saving SL
-    sl = np.array(df["SL"])[0]
-
-    if useTrigger:
-        # saving T_ANGLE
-        t_angle = np.array(df["T_ANGLE"])[0]
-
-        # saving T_POSITION
-        t_position = np.array(df["T_POSITION"])[0]
-
     flag = True
 
     for data in comb:
         X = np.array(pd.concat([data["X_RIGHT_GLOB"], data["X_LEFT_GLOB"]]))
         Y = np.array(pd.concat([data["WIRE_Z_GLOB"], data["WIRE_Z_GLOB"]]))
         for indexes_comb in list(combinations(range(len(X)), tot_Hits)):
-            new_X = []
-            new_Y = []
-            for i in indexes_comb:
-                new_X.append(X[i])
-                new_Y.append(Y[i])
-
-            if len(np.unique(new_Y)) == tot_Hits:
-                regr_tuple = linear_reg(new_X, new_Y)
+            indexes_comb = list(indexes_comb)
+            if len(np.unique(X[indexes_comb])) == tot_Hits:
+                regr_dict = linear_reg(X[indexes_comb], Y[indexes_comb])
                 if flag:
-                    min_lambda = abs(regr_tuple["chisq_comp"])
-                    xdata = new_X
-                    ydata = new_Y
-                    res_dict = regr_tuple
+                    min_lambda = abs(regr_dict["chisq_comp"])
+                    xdata = X[indexes_comb]
+                    res_dict = regr_dict
                     flag = False
                     best_comb = indexes_comb
                     best_data = data
-                elif abs(regr_tuple["chisq_comp"]) < min_lambda:
+                elif abs(regr_dict["chisq_comp"]) < min_lambda:
+                    min_lambda = abs(regr_dict["chisq_comp"])
+                    xdata = X[indexes_comb]
+                    res_dict = regr_dict
                     best_comb = indexes_comb
-                    min_lambda = abs(regr_tuple["chisq_comp"])
-                    xdata = new_X
-                    ydata = new_Y
-                    res_dict = regr_tuple
                     best_data = data
 
     big_df = pd.concat([best_data, best_data], axis=0, ignore_index=True)
@@ -103,69 +83,16 @@ def compute(df, useTrigger):  # DA OTTIMIZZARE E SNELLIRE
     reco_df["m"] = np.full(len(reco_df), res_dict["m"])
     reco_df["q"] = np.full(len(reco_df), res_dict["q"])
     reco_df["X"] = xdata
-    res_dict["ORBIT_CNT"] = orbit
-    res_dict["SL"] = sl
-    if useTrigger:
-        res_dict["T_ANGLE"] = t_angle
-        res_dict["T_POSITION"] = t_position
-    return res_dict, xdata, ydata, reco_df
+    if xdata is None: return
 
-
-# *****************************************************************************
-# COMBINATE GLOBAL and PARTIAL
-# *****************************************************************************
-
-
-def compute_tot(df_E, data, useTrigger):
-
-    res_df = pd.DataFrame()
-
-    # saving ORBIT_CNT
-    orbit = np.array(df_E["ORBIT_CNT"])[0]
-
-    # saving SL
-    sl = 4
-    if useTrigger:
-        # saving T_ANGLE
-        t_angle = np.array(df_E["T_ANGLE"])[0]
-
-        # saving T_POSITION
-        t_position = np.array(df_E["T_POSITION"])[0]
-
-    X1 = np.array(data.X)
-    Y1 = np.array(data.Z)
-
-    if len(X1) == 0 or len(Y1) == 0:
-        return
-    res_dict = linear_reg(X1, Y1)
-
-    res_dict["ORBIT_CNT"] = orbit
-    res_dict["SL"] = sl
-    if useTrigger:
-        res_dict["T_ANGLE"] = t_angle
-        res_dict["T_POSITION"] = t_position
-    res_df = res_df.append(res_dict, ignore_index=True)
-
-    return res_df
+    return reco_df
 
 
 # *****************************************************************************
 # COMPUTE EVENT
 # *****************************************************************************
 
-
-class Hitsdf:
-    def __init__(self, dataframe=None):
-        self.df = dataframe
-
-    def load(self, dataframe):
-        self.df = dataframe
-
-
-def computeEvent(df_E, df_Hits, useTrigger=True):
-
-    res_df = pd.DataFrame()
-    hits_data = []
+def computeEvent(df_E):
 
     chamber = [df_E[df_E["SL"] == 0], df_E[df_E["SL"] == 1], df_E[df_E["SL"] == 2], df_E[df_E["SL"] == 3]]
     event_reco_df = pd.DataFrame()
@@ -174,27 +101,15 @@ def computeEvent(df_E, df_Hits, useTrigger=True):
         if len(pd.unique(df.LAYER)) < 3:
             continue
 
-        regrtuple, xvec, yvec, chamber_reco_df = compute(df, useTrigger)
+        chamber_reco_df = compute(df)
         event_reco_df = pd.concat(
             [event_reco_df, chamber_reco_df], axis=0, ignore_index=True
         )
-        hit_data = pd.DataFrame({"X": xvec, "Z": yvec})
-        hits_data.append(hit_data)
-        res_df = res_df.append(regrtuple, ignore_index=True)
 
-    if not hits_data:
+    if (event_reco_df is None):
         return
 
-    hits_tot = pd.concat(hits_data, ignore_index=True)
-    #regrtuple = compute_tot(df_E, hits_tot, useTrigger)
-    #res_df = res_df.append(regrtuple, ignore_index=True)
-    df_Hits.load(hits_tot)
-    res_df = res_df.astype({"SL": "int8"})
-
-    if (res_df is None) or (hits_tot is None) or (event_reco_df is None):
-        return
-
-    return [res_df, event_reco_df]
+    return event_reco_df
 
 
 # *****************************************************************************
@@ -202,22 +117,15 @@ def computeEvent(df_E, df_Hits, useTrigger=True):
 # *****************************************************************************
 
 
-def getRecoResults(events, useTrigger=True):
-    resultsList = []
-    resultsData = []
-    resultsHits = []
+def getRecoResults(events):
     resultsDf = []
 
     for df_E in events:
         if len(df_E) > 32:
             continue
-        resultsHits.append(Hitsdf())
-        reco = computeEvent(df_E, resultsHits[-1], useTrigger)
-        if reco is None:
+        event_reco_df = computeEvent(df_E)
+        if event_reco_df is None:
             continue
-        res_df, event_reco_df = reco[0], reco[1]
-        resultsList.append(res_df)
         resultsDf.append(event_reco_df)
-        resultsData.append(df_E)
 
-    return resultsList, resultsData, resultsHits, resultsDf
+    return resultsDf
