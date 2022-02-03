@@ -52,13 +52,13 @@ def argParser():
     return parser.parse_args()
 
 
-def buildDataframe(stream_df, cfg):
+def buildDataframe(df_fname, cfg):
 
     df = pd.DataFrame()
 
     # reco (da sistemare getEvents e getRecoResults)
     print("Getting events...")
-    events = getEvents(stream_df, cfg, RUN_TIME_SHIFT, USE_TRIGGER)
+    events = getEvents(df_fname, cfg, RUN_TIME_SHIFT, USE_TRIGGER)
     print("Reconstructing tracks...")
     resultsDf = getRecoResults( # editing
         events
@@ -115,15 +115,12 @@ def main(args):
     data_file = DATA_PATH + f"RUN00{RUNNUMBER}_data.txt"
     config_file = CONFIG_PATH + f"RUN00{RUNNUMBER}.yml"
 
-    # read data from file
-    print("Reading data from file...")
-    stream_df = pd.read_csv(data_file)
     # read config from file
     print("Reading config from file...")
     with open(config_file, "r") as f:
         cfg = yaml.safe_load(f)
 
-    df = buildDataframe(stream_df, cfg)
+    df = buildDataframe(data_file, cfg)
     channels = saveChannels(df, OUTPUT_PATH, RUNNUMBER)
 
     return
