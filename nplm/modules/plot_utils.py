@@ -150,6 +150,98 @@ def plot_full_scatter(df, features):
 
 
 
+
+def plot_full_dataset_2(ref, data, features, bins, weights):
+    """histogram of two features"""
+    
+    dt_bins     = bins[0]
+    theta_bins  = bins[1]
+    weightsRef  = weights[0]
+    weightsData = weights[1]
+    
+    fig, ax = plt.subplots(ncols=2, figsize=(18,8))
+    
+    ax[0].set_title("time box")
+    ax[0].set_xlabel("drift time (ns)")
+    ax[0].set_ylabel("counts")
+    
+    ax[1].set_title("theta distribution")
+    ax[1].set_xlabel("theta (deg)")
+    ax[1].set_ylabel("counts")
+    
+    ax[0].set_xlim(dt_bins[0], dt_bins[-1])
+    ax[1].set_xlim(theta_bins[0], theta_bins[-1])
+    
+    
+    ax[0].hist(
+        ref[features[0]], 
+        bins=dt_bins, 
+        weights=weightsRef,
+        density=False,
+        histtype="stepfilled", 
+        linewidth=3,
+        edgecolor="#009cff", 
+        facecolor="#aadeff", 
+        alpha=1, 
+        label="reference"
+    )
+    
+    ax[0].hist(
+        data[features[0]], 
+        bins=dt_bins, 
+        weights=weightsData,
+        density=False,
+        histtype="stepfilled", 
+        linewidth=3,
+        edgecolor="#ff6300", 
+        facecolor="none", 
+        alpha=1, 
+        label="data"
+    )
+    
+
+
+    ax[1].hist(
+        ref[features[1]], 
+        bins=theta_bins, 
+        weights=weightsRef,
+        density=False,
+        histtype="stepfilled", 
+        linewidth=3,
+        edgecolor="#009cff", 
+        facecolor="#aadeff", 
+        alpha=1, 
+        label="reference"
+    )
+    
+    ax[1].hist(
+        data[features[1]], 
+        bins=theta_bins, 
+        weights=weightsData,
+        density=False,
+        histtype="stepfilled", 
+        linewidth=3,
+        edgecolor="#ff6300", 
+        facecolor="none", 
+        alpha=1, 
+        label="data"
+    )
+    
+    # exponential y ticks
+    ax[0].yaxis.set_major_formatter(ScalarFormatter(useMathText=True))
+    ax[0].ticklabel_format(axis = 'y', style = 'sci', scilimits = (0,0))
+    ax[1].yaxis.set_major_formatter(ScalarFormatter(useMathText=True))
+    ax[1].ticklabel_format(axis = 'y', style = 'sci', scilimits = (0,0))
+    
+    ax[0].legend()
+    ax[1].legend()
+    change_legend(ax=ax[0], new_loc="upper right", fontsize=14, titlesize=0)
+    change_legend(ax=ax[1], new_loc="upper right", fontsize=14, titlesize=0)
+        
+    return fig, ax
+
+
+
 # ------- NPLM Datasets
 
 
