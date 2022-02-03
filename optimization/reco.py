@@ -94,7 +94,7 @@ def compute(df):  # DA OTTIMIZZARE E SNELLIRE
 
 def computeEvent(df_E):
 
-    chamber = [df_E[df_E["SL"] == 0], df_E[df_E["SL"] == 1], df_E[df_E["SL"] == 2], df_E[df_E["SL"] == 3]]
+    chamber = [df_E[df_E["SL"] == i] for i in range(4)]
     event_reco_df = pd.DataFrame()
 
     for df in chamber:
