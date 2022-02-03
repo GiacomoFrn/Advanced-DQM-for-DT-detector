@@ -154,6 +154,8 @@ def getRecoResults(events):
         event_reco_df = computeEvent(df_E)
         if event_reco_df is None:
             continue
+        if len(event_reco_df)==0:
+            continue
         resultsDf.append(event_reco_df)
 
     return resultsDf
@@ -193,6 +195,8 @@ def getRecoResults_mp(events):
             thread.join()
             event_reco_df = thread.recoDf
             if event_reco_df is None:
+                continue
+            if len(event_reco_df)==0:
                 continue
             resultsDf.append(event_reco_df)
 
