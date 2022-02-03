@@ -10,7 +10,7 @@ warnings.filterwarnings("ignore")
 
 
 from eventsFactory import getEvents
-from reco import getRecoResults
+from reco import getRecoResults, getRecoResults_mt
 
 """USAGE:
 
@@ -34,6 +34,7 @@ RUN_TIME_SHIFT = 0
 KEEP = ["FPGA", "TDC_CHANNEL", "HIT_DRIFT_TIME", "D_WIRE_HIT", "m"]
 
 
+
 def argParser():
     """manages command line arguments"""
 
@@ -48,11 +49,13 @@ def argParser():
         "-c", "--config", type=str, default="../config/", help="config directory"
     )
     parser.add_argument("-run", "--run", type=str, default="0054", help="run number")
+    parser.add_argument("-mt", "--multithreading", type=bool, default=True, help="multithreading")
+
 
     return parser.parse_args()
 
 
-def buildDataframe(df_fname, cfg):
+def buildDataframe(df_fname, cfg, MULTITHREADING):
 
     df = pd.DataFrame()
 
@@ -60,9 +63,10 @@ def buildDataframe(df_fname, cfg):
     print("Getting events...")
     events = getEvents(df_fname, cfg, RUN_TIME_SHIFT, USE_TRIGGER)
     print("Reconstructing tracks...")
-    resultsDf = getRecoResults( # editing
-        events
-    )
+    if MULTITHREADING:
+        resultsDf = getRecoResults_mt( events )
+    else:
+        resultsDf = getRecoResults( events )
     print("Building dataframe...")
     # out df
     for df_ in resultsDf:
@@ -110,6 +114,8 @@ def main(args):
     CONFIG_PATH = args.config
     RUNNUMBER = args.run
     OUTPUT_PATH = args.output
+    MULTITHREADING = args.multithreading
+
 
     # link data and config files
     data_file = DATA_PATH + f"RUN00{RUNNUMBER}_data.txt"
@@ -120,7 +126,7 @@ def main(args):
     with open(config_file, "r") as f:
         cfg = yaml.safe_load(f)
 
-    df = buildDataframe(data_file, cfg)
+    df = buildDataframe(data_file, cfg, MULTITHREADING)
     channels = saveChannels(df, OUTPUT_PATH, RUNNUMBER)
 
     return
