@@ -134,8 +134,8 @@ def computeEvent(df_E):
             [event_reco_df, chamber_reco_df], axis=0, ignore_index=True
         )
 
-    if (event_reco_df is None):
-        return
+    if len(event_reco_df)==0:
+        return None
 
     return event_reco_df
 
