@@ -1,4 +1,4 @@
-run: "000054"
+run: "000057"
 
 # hit headers
 headers:
@@ -19,12 +19,12 @@ scintillator:
   head:   2
   fpga:   1
   tdc_ch: 128
-time_offset_scint: 143.6
+time_offset_scint: 144.35
 time_offset_sl:
-  0: 3
-  1: 4.5
-  2: -7.5
-  3: -5.5
+  0: -2.3
+  1: 2.2
+  2: -14.5
+  3: -4.3
   
 # shift of the SL (x, y, z)
 sl_shift:
