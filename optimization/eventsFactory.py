@@ -1,5 +1,5 @@
 import pandas as pd
-
+import numpy as np
 from constants import DURATION_BX, VDRIFT
 from mappings import Mapping
 
@@ -13,7 +13,7 @@ def map_hit_position(hits_df_, local=False):
     computed in the global frame of reference
     """
 
-    hits_df_["HIT_DRIFT_TIME"] = (hits_df_["BX_COUNTER"]+hits_df_["TDC_MEAS"]/30)*25-hits_df_["T0_NS"]
+    hits_df_["HIT_DRIFT_TIME"] = (hits_df_["BX_COUNTER"]+hits_df_["TDC_MEAS"]/30)*DURATION_BX-hits_df_["T0_NS"]
 
     ref = "LOC" if local else "GLOB"
     hits_df_[f"X_LEFT_{ref}"] = hits_df_[f"WIRE_X_{ref}"] - hits_df_["HIT_DRIFT_TIME"]*VDRIFT
@@ -79,24 +79,22 @@ def computeEvents(hits_df_):
     return events
 
 
-def getEvents(stream_df, cfg, runTimeShift, useTrigger):
+def getEvents(df_fname, cfg, runTimeShift, useTrigger):
     
+    #reading df from file
+    dtype_dict = { 'HEAD':np.uint8, 'FPGA':np.uint8, 'TDC_CHANNEL':np.uint8, 'ORBIT_CNT':np.uint64, 'BX_COUNTER':np.uint16, 'TDC_MEAS':np.uint8 }
+    print("Reading dataset from file...")
+    stream_df = pd.read_csv(df_fname, dtype=dtype_dict)
+
     # create a dataframe with only valid hits ->
     # trigger words and scintillator hits are removed
     hits_df = stream_df[
         (stream_df.HEAD == cfg["headers"]["valid_hit"]) &
         (stream_df.TDC_CHANNEL <= 127)
-        ].copy()
-
-    # fix TDC_MEAS data type
+        ]
+    
+    #drop NaN
     hits_df = hits_df.dropna()
-    hits_df = hits_df.astype({"TDC_MEAS": "int32"})
-
-    # create mapping with the loaded configurations
-    mapper = Mapping(cfg)
-
-    # map hits
-    hits_df = mapper.global_map(hits_df)
 
     # select all orbits with a trigger signal from
     # the scintillators coincidence
@@ -104,17 +102,20 @@ def getEvents(stream_df, cfg, runTimeShift, useTrigger):
         (stream_df["HEAD"] == cfg["scintillator"]["head"]) & 
         (stream_df["FPGA"] == cfg["scintillator"]["fpga"]) & 
         (stream_df["TDC_CHANNEL"] == cfg["scintillator"]["tdc_ch"])
-    ].copy()
+    ]
 
     # create a T0 column (in ns)
-    trigger_df["T0"] = (trigger_df["BX_COUNTER"] + trigger_df["TDC_MEAS"] / 30)
+    trigger_df["T0_NS"] = (trigger_df["BX_COUNTER"] + trigger_df["TDC_MEAS"] / 30) * DURATION_BX
 
     # select only hits in the same orbit of a scint trigger signal
     hits_df_ = pd.merge(
-        hits_df, trigger_df[["ORBIT_CNT","T0"]],
+        hits_df, trigger_df[["ORBIT_CNT","T0_NS"]],
         left_on="ORBIT_CNT", right_on="ORBIT_CNT",
         suffixes=(None, None)
     )
+
+    del trigger_df
+    del hits_df
     # print the number of valid hits found in data
     print(f"Valid hits: {hits_df_.shape[0]}")
 
@@ -122,14 +123,16 @@ def getEvents(stream_df, cfg, runTimeShift, useTrigger):
     if (useTrigger == True):
         hits_df_ = usingTrigger(stream_df=stream_df, hits_df_=hits_df_, cfg=cfg)
 
+    del stream_df
+    # create mapping with the loaded configurations
+    mapper = Mapping(cfg)
+    # map hits
+    hits_df_ = mapper.global_map(hits_df_)
 
     # TIME SHIFTING
     # apply scintillator calibration -> they shoul be computed
     # for each run! For this example run, values are provided in
     # the configurations file.
-
-    # create a time column in NS
-    hits_df_["T0_NS"] = hits_df_["T0"] * DURATION_BX
 
     for sl, offset_sl in cfg["time_offset_sl"].items():
         # correction is in the form:
