@@ -48,6 +48,8 @@
     ],
     "BSMweight_clipping": 1.9,
     "correction": "",
+    "theta1": 0,
+    "theta2": 0,
     "pyscript": "toy.py",
     "run": "00541"
 }

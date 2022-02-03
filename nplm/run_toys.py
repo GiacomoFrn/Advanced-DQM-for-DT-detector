@@ -34,10 +34,10 @@ config_json = {
     "epochs_delta": 0,
     "patience_delta": 0,
     "BSMarchitecture": [2,3,3,1],
-    "BSMweight_clipping": 2.1, 
+    "BSMweight_clipping": 1.8, 
     "correction": "", # "SHAPE", "NORM", ""
-    "theta1": None,
-    "theta2": None,
+    "theta1": 0,
+    "theta2": 0,
 }
 
 # list process normalization generation values from shape uncertainties generation values

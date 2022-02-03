@@ -104,7 +104,7 @@ if N_Sig:
     N_Sig_Pois = np.random.poisson(lam=N_Sig*np.exp(Norm), size=1)[0]
 
 # featureData = np.random.exponential(scale=np.exp(1*Scale), size=(N_Bkg_Pois, 1))
-if theta1 is not None or theta2 is not None:
+if theta1 or theta2:
     featureData = read_data_cut(file_name=DATA_FOLDER+DATA_FILE, n_data=N_Bkg_Pois, theta1=theta1, theta2=theta2)
 else:
     featureData = read_data(file_name=DATA_FOLDER+DATA_FILE, n_data=N_Bkg_Pois)
@@ -114,7 +114,7 @@ if N_Sig:
     featureData = np.concatenate((featureData, featureSig), axis=0)
 
 # featureRef = np.random.exponential(scale=np.exp(1*Scale), size=(N_ref, 1))
-if theta1 is not None or theta2 is not None:
+if theta1 or theta2:
     featureRef  = read_data_cut(file_name=DATA_FOLDER+REFERENCE_FILE, n_data=N_ref, theta1=theta1, theta2=theta2)
 else:
     featureRef  = read_data(file_name=DATA_FOLDER+REFERENCE_FILE, n_data=N_ref)
