@@ -74,13 +74,13 @@ def buildDataframe(df_fname, cfg, MULTIPROCESSING):
     for df_ in resultsDf:
         df_["D_WIRE_HIT"]= df_["X"]-df_["WIRE_X_GLOB"]
         df_ = df_[KEEP]
-        df = pd.concat([df, df_], axis=0, ignore_index=True)
+    df = pd.concat(resultsDf, axis=0, ignore_index=True)
     
     # add a sequential channel tag
     df.loc[(df["FPGA"] == 0), "CH"] = df["TDC_CHANNEL"]
     df.loc[(df["FPGA"] == 1), "CH"] = df["TDC_CHANNEL"] + 128
     df_ = df.drop(["FPGA", "TDC_CHANNEL"], axis=1)
-    df_["CH"] = df_["CH"].astype(np.uint32)
+    df_["CH"] = df_["CH"].astype(np.uint8)
 
     # clean dataset
     df = df_[["CH", "HIT_DRIFT_TIME",'D_WIRE_HIT', "m"]]
