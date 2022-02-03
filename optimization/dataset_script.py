@@ -10,7 +10,7 @@ warnings.filterwarnings("ignore")
 
 
 from eventsFactory import getEvents
-from reco import getRecoResults
+from reco import getRecoResults, getRecoResults_mp
 
 """USAGE:
 
@@ -34,6 +34,7 @@ RUN_TIME_SHIFT = 0
 KEEP = ["FPGA", "TDC_CHANNEL", "HIT_DRIFT_TIME", "D_WIRE_HIT", "m"]
 
 
+
 def argParser():
     """manages command line arguments"""
 
@@ -48,11 +49,13 @@ def argParser():
         "-c", "--config", type=str, default="../config/", help="config directory"
     )
     parser.add_argument("-run", "--run", type=str, default="0054", help="run number")
-
+    parser.add_argument("-mp", "--multiprocessing", dest="multiprocessing", action='store_true', help="multiprocessing")
+    parser.add_argument("-no-mp", "--no--multiprocessing", dest="multiprocessing", action='store_false', help="no multiprocessing")
+    parser.set_defaults(multiprocessing=True)
     return parser.parse_args()
 
 
-def buildDataframe(df_fname, cfg):
+def buildDataframe(df_fname, cfg, MULTIPROCESSING):
 
     df = pd.DataFrame()
 
@@ -60,16 +63,19 @@ def buildDataframe(df_fname, cfg):
     print("Getting events...")
     events = getEvents(df_fname, cfg, RUN_TIME_SHIFT, USE_TRIGGER)
     print("Reconstructing tracks...")
-    resultsDf = getRecoResults( # editing
-        events
-    )
+    if MULTIPROCESSING:
+        print("Using multiprocessing...")
+        resultsDf = getRecoResults_mp( events )
+    else:
+        print("Without multiprocessing...")
+        resultsDf = getRecoResults( events )
     print("Building dataframe...")
     # out df
     for df_ in resultsDf:
         df_["D_WIRE_HIT"]= df_["X"]-df_["WIRE_X_GLOB"]
         df_ = df_[KEEP]
         df = pd.concat([df, df_], axis=0, ignore_index=True)
-
+    
     # add a sequential channel tag
     df.loc[(df["FPGA"] == 0), "CH"] = df["TDC_CHANNEL"]
     df.loc[(df["FPGA"] == 1), "CH"] = df["TDC_CHANNEL"] + 128
@@ -110,6 +116,8 @@ def main(args):
     CONFIG_PATH = args.config
     RUNNUMBER = args.run
     OUTPUT_PATH = args.output
+    MULTIPROCESSING = args.multiprocessing
+
 
     # link data and config files
     data_file = DATA_PATH + f"RUN00{RUNNUMBER}_data.txt"
@@ -120,7 +128,7 @@ def main(args):
     with open(config_file, "r") as f:
         cfg = yaml.safe_load(f)
 
-    df = buildDataframe(data_file, cfg)
+    df = buildDataframe(data_file, cfg, MULTIPROCESSING)
     channels = saveChannels(df, OUTPUT_PATH, RUNNUMBER)
 
     return

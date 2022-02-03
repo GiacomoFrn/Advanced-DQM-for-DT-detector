@@ -134,8 +134,8 @@ def computeEvent(df_E):
             [event_reco_df, chamber_reco_df], axis=0, ignore_index=True
         )
 
-    if (event_reco_df is None):
-        return
+    if len(event_reco_df)==0:
+        return None
 
     return event_reco_df
 
@@ -154,6 +154,50 @@ def getRecoResults(events):
         event_reco_df = computeEvent(df_E)
         if event_reco_df is None:
             continue
+        if len(event_reco_df)==0:
+            continue
         resultsDf.append(event_reco_df)
+
+    return resultsDf
+
+# *****************************************************************************
+# MULTIPROCESSING
+# *****************************************************************************
+
+from multiprocessing import Process
+import os
+
+class eventProcess (Process):
+    def __init__(self, df_E):
+        Process.__init__(self)
+        self.df_E = df_E
+        self.recoDf = pd.DataFrame()
+    def run(self):
+        self.recoDf = computeEvent(self.df_E)
+        
+        
+def getRecoResults_mp(events):
+    resultsDf = []
+    group_s = 4*os.cpu_count()
+    bounds = list(range(0, len(events), group_s)) + [len(events)]
+    events_groups = [events[bounds[i]:bounds[i+1]] for i in range(0, len(bounds)-1)]
+    
+    for events_l in events_groups:
+        processes = []
+        #create and start threads
+        for df_E in events_l:
+            if len(df_E) > 32:
+                continue
+            processes.append(eventProcess(df_E))
+            processes[-1].start()
+        #wait group of threads to finish
+        for thread in processes:
+            thread.join()
+            event_reco_df = thread.recoDf
+            if event_reco_df is None:
+                continue
+            if len(event_reco_df)==0:
+                continue
+            resultsDf.append(event_reco_df)
 
     return resultsDf
