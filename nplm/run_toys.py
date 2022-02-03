@@ -34,7 +34,7 @@ config_json = {
     "epochs_delta": 0,
     "patience_delta": 0,
     "BSMarchitecture": [2,3,3,1],
-    "BSMweight_clipping": 2.7, 
+    "BSMweight_clipping": 2.1, 
     "correction": "", # "SHAPE", "NORM", ""
 }
 
