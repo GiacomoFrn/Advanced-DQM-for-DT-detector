@@ -101,6 +101,8 @@ def compute(df, useTrigger):  # DA OTTIMIZZARE E SNELLIRE
     big_df = pd.concat([best_data, best_data], axis=0, ignore_index=True)
     reco_df = big_df.loc[best_comb, :]
     reco_df["m"] = np.full(len(reco_df), res_dict["m"])
+    reco_df["q"] = np.full(len(reco_df), res_dict["q"])
+    reco_df["X"] = xdata
     res_dict["ORBIT_CNT"] = orbit
     res_dict["SL"] = sl
     if useTrigger:
@@ -165,7 +167,7 @@ def computeEvent(df_E, df_Hits, useTrigger=True):
     res_df = pd.DataFrame()
     hits_data = []
 
-    chamber = [df_E[df_E["SL"] == 0], df_E[df_E["SL"] == 2], df_E[df_E["SL"] == 3]]
+    chamber = [df_E[df_E["SL"] == 0], df_E[df_E["SL"] == 1], df_E[df_E["SL"] == 2], df_E[df_E["SL"] == 3]]
     event_reco_df = pd.DataFrame()
 
     for df in chamber:
@@ -184,8 +186,8 @@ def computeEvent(df_E, df_Hits, useTrigger=True):
         return
 
     hits_tot = pd.concat(hits_data, ignore_index=True)
-    regrtuple = compute_tot(df_E, hits_tot, useTrigger)
-    res_df = res_df.append(regrtuple, ignore_index=True)
+    #regrtuple = compute_tot(df_E, hits_tot, useTrigger)
+    #res_df = res_df.append(regrtuple, ignore_index=True)
     df_Hits.load(hits_tot)
     res_df = res_df.astype({"SL": "int8"})
 

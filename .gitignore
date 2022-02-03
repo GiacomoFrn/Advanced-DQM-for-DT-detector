@@ -1,4 +1,5 @@
 # Condor folders
+jobs*/
 condor_jobs/
 
 # Data folder

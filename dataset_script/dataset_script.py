@@ -31,7 +31,7 @@ from reco import getRecoResults
 # CONSTANTS
 USE_TRIGGER = False
 RUN_TIME_SHIFT = 0
-KEEP = ["FPGA", "TDC_CHANNEL", "HIT_DRIFT_TIME", "m"]
+KEEP = ["FPGA", "TDC_CHANNEL", "HIT_DRIFT_TIME", "D_WIRE_HIT", "m"]
 
 
 def argParser():
@@ -66,6 +66,7 @@ def buildDataframe(stream_df, cfg):
     print("Building dataframe...")
     # out df
     for df_ in resultsDf:
+        df_["D_WIRE_HIT"]= df_["X"]-df_["WIRE_X_GLOB"]
         df_ = df_[KEEP]
         df = pd.concat([df, df_], axis=0, ignore_index=True)
 
@@ -76,8 +77,9 @@ def buildDataframe(stream_df, cfg):
     df_["CH"] = df_["CH"].astype(np.uint32)
 
     # clean dataset
-    df = df_[["CH", "HIT_DRIFT_TIME", "m"]]
+    df = df_[["CH", "HIT_DRIFT_TIME",'D_WIRE_HIT', "m"]]
     df = df[(df["HIT_DRIFT_TIME"] > -200) & (df["HIT_DRIFT_TIME"] < 600)]
+    df = df[(df['D_WIRE_HIT'] > -21) & (df['D_WIRE_HIT'] < 21)]
 
     # rad to deg conversion
     df["THETA"] = np.arctan(df["m"]) * 180.0 / math.pi

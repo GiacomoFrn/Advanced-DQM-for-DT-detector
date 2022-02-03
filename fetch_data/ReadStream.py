@@ -8,25 +8,29 @@ from s3fs.core import S3FileSystem
 class StreamReader:
     """manages data I/O from CloudVeneto"""
 
-    def __init__(self, run_number: int, output_path: str, n_files: int, format: str):
+    def __init__(self, run_number: int, output_path: str, n_files: int, format: str, capital: bool):
         """
         run_number  : idientifies the detector's run - only the last 4 digits are needed
         output_path : directory where data is to be saved
         n_files     : number of files to read from CloudVeneto (usually -1 to get the whole run)
         format      : CVeneto container format (RUN00xxxx or Run00xxxx)
+        capital     : first letter of container name (True if capital, False if not)
         """
 
         # initialize instance attributes
         self.run_number  = run_number
         self.output_path = output_path
         self.n_files     = n_files
-        
-        # select which format to use when reading data from CloudVeneto
-        if format == "upper":           # old data
-            self.run_format = "RUN00"
-        elif format == "lower":         # new data
-            self.run_format = "Run00"
 
+        # select which format to use when reading data from CloudVeneto
+        if format == "lower":
+            if capital == "upper":
+                self.run_format = "Run00"
+            elif capital == "lower":
+                self.run_format = "run00"
+        elif format == "upper":
+            self.run_format = "RUN00"
+            
         # generate the data file path and name
         self.output_file = self.output_path + f"RUN00{self.run_number}_data.txt"
 
