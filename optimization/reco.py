@@ -42,7 +42,7 @@ def linear_reg(X, Y):
 from itertools import combinations
 
 
-def compute(df):  # DA OTTIMIZZARE E SNELLIRE
+def compute(df): 
     
     comb = []
     if len(df.LAYER.unique()) == 3:
@@ -50,36 +50,64 @@ def compute(df):  # DA OTTIMIZZARE E SNELLIRE
         tot_Hits = 3
     else:
         for index in list(combinations(df.index, 4)):
-            tmp_df = df.loc[index, :]
-            if len(tmp_df.LAYER.unique()) == 4:
-                comb.append(tmp_df)  # comb[] contains combinations of data
+            if len(df.loc[index, :].LAYER.unique()) == 4:
+                comb.append(df.loc[index, :]) 
         tot_Hits = 4
 
-    flag = True
+    min_lambda = np.finfo(float).max
 
     for data in comb:
         X = np.array(pd.concat([data["X_RIGHT_GLOB"], data["X_LEFT_GLOB"]]))
         Y = np.array(pd.concat([data["WIRE_Z_GLOB"], data["WIRE_Z_GLOB"]]))
         for indexes_comb in list(combinations(range(len(X)), tot_Hits)):
             indexes_comb = list(indexes_comb)
-            if len(np.unique(X[indexes_comb])) == tot_Hits:
+            if len(np.unique(Y[indexes_comb])) == tot_Hits:
                 regr_dict = linear_reg(X[indexes_comb], Y[indexes_comb])
-                if flag:
-                    min_lambda = abs(regr_dict["chisq_comp"])
-                    xdata = X[indexes_comb]
-                    res_dict = regr_dict
-                    flag = False
-                    best_comb = indexes_comb
-                    best_data = data
-                elif abs(regr_dict["chisq_comp"]) < min_lambda:
+                if abs(regr_dict["chisq_comp"]) < min_lambda:
                     min_lambda = abs(regr_dict["chisq_comp"])
                     xdata = X[indexes_comb]
                     res_dict = regr_dict
                     best_comb = indexes_comb
                     best_data = data
 
-    big_df = pd.concat([best_data, best_data], axis=0, ignore_index=True)
-    reco_df = big_df.loc[best_comb, :]
+    reco_df = pd.concat([best_data, best_data], axis=0, ignore_index=True)
+    reco_df = reco_df.loc[best_comb, :]
+    reco_df["m"] = np.full(len(reco_df), res_dict["m"])
+    reco_df["q"] = np.full(len(reco_df), res_dict["q"])
+    reco_df["X"] = xdata
+    if xdata is None: return
+
+    return reco_df
+""""
+def computeOpt(df):  
+
+    if len(df.LAYER.unique()) == 3:
+        tot_Hits = 3
+    else:
+        tot_Hits = 4
+
+    flag = True
+
+    X = np.array(pd.concat([df["X_RIGHT_GLOB"], df["X_LEFT_GLOB"]]))
+    Y = np.array(pd.concat([df["WIRE_Z_GLOB"], df["WIRE_Z_GLOB"]]))
+    for indexes_comb in list(combinations(range(len(X)), tot_Hits)):
+        indexes_comb = list(indexes_comb)
+        if len(np.unique(Y[indexes_comb])) == tot_Hits:
+            regr_dict = linear_reg(X[indexes_comb], Y[indexes_comb])
+            if flag:
+                min_lambda = abs(regr_dict["chisq_comp"])
+                xdata = X[indexes_comb]
+                res_dict = regr_dict
+                flag = False
+                best_comb = indexes_comb
+            elif abs(regr_dict["chisq_comp"]) < min_lambda:
+                min_lambda = abs(regr_dict["chisq_comp"])
+                xdata = X[indexes_comb]
+                res_dict = regr_dict
+                best_comb = indexes_comb
+
+    reco_df = pd.concat([df, df], axis=0, ignore_index=True)
+    reco_df = reco_df.loc[best_comb, :]
     reco_df["m"] = np.full(len(reco_df), res_dict["m"])
     reco_df["q"] = np.full(len(reco_df), res_dict["q"])
     reco_df["X"] = xdata
@@ -87,7 +115,7 @@ def compute(df):  # DA OTTIMIZZARE E SNELLIRE
 
     return reco_df
 
-
+"""
 # *****************************************************************************
 # COMPUTE EVENT
 # *****************************************************************************
@@ -100,7 +128,7 @@ def computeEvent(df_E):
     for df in chamber:
         if len(pd.unique(df.LAYER)) < 3:
             continue
-
+        
         chamber_reco_df = compute(df)
         event_reco_df = pd.concat(
             [event_reco_df, chamber_reco_df], axis=0, ignore_index=True
