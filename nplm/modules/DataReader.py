@@ -1,4 +1,5 @@
 import pandas 
+import numpy as np
 import h5py
 
 
@@ -50,6 +51,40 @@ class DataReader:
         # random data extraction from the whole dataset
         df = self.df.sample(n=ndata)
         
+        return df[["drift_time", "theta"]] 
+    
+    
+    
+    def cut_theta(self, ndata: int, theta1: float = None, theta2: float = None) -> pandas.DataFrame:
+        """
+        Performs cuts on the theta observable 
+        
+        Args:
+            ndata (int): dimensionality of the dataset
+            theta1 (float): lower bound (if not specified theta = theta < theta2)
+            theta2 (float): upper bound (if not specigied theta = theta > theta1) 
+            
+        Returns:
+            df (pandas.DataFrame): dataset after theta cut
+            
+        """
+        
+        # interval theta1 < theta < theta2
+        if theta1 is not None and theta2 is not None:
+            df = self.df[(np.abs(self.df["theta"])>theta1) & (np.abs(self.df["theta"])<theta2)]
+        # interval theta > theta1
+        elif theta1 is not None and theta2 is None:
+            df = self.df[np.abs(self.df["theta"])>theta1]
+        # interval theta < theta2
+        elif theta1 is None and theta2 is not None:
+            df = self.df[np.abs(self.df["theta"])<theta2]
+        # no cut
+        elif theta1 is None and theta2 is None:
+            df = self.df
+            print("no cut performed")
+            
+        df = df.sample(n=ndata)
+            
         return df[["drift_time", "theta"]] 
 
 

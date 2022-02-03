@@ -36,6 +36,8 @@ config_json = {
     "BSMarchitecture": [2,3,3,1],
     "BSMweight_clipping": 2.1, 
     "correction": "", # "SHAPE", "NORM", ""
+    "theta1": None,
+    "theta2": None,
 }
 
 # list process normalization generation values from shape uncertainties generation values
