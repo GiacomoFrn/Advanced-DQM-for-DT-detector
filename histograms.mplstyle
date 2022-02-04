@@ -1,11 +1,11 @@
 # figure
-figure.figsize   : 14, 8
+figure.figsize   : 10, 6
 figure.facecolor : white
 
 # axes
-axes.titlesize : 24
-axes.labelsize : 20
+axes.titlesize : 28
+axes.labelsize : 24
 
 # ticks
-xtick.labelsize : 16
-ytick.labelsize : 16
+xtick.labelsize : 22
+ytick.labelsize : 22
