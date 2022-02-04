@@ -29,15 +29,15 @@ config_json = {
     "norm_nuisances_data":       0,
     "norm_nuisances_reference":  0,
     "norm_nuisances_sigma":      0,
-    "epochs_tau": 100000,
+    "epochs_tau": 50000,
     "patience_tau": 1000,
     "epochs_delta": 0,
     "patience_delta": 0,
     "BSMarchitecture": [2,3,3,1],
     "BSMweight_clipping": 1.8, 
     "correction": "", # "SHAPE", "NORM", ""
-    "theta1": 0,
-    "theta2": 0,
+    "theta1": 30,    # 0
+    "theta2": 55,    # 55
 }
 
 # list process normalization generation values from shape uncertainties generation values
@@ -87,6 +87,9 @@ if __name__ == '__main__':
     parser.add_argument('-l','--local',    type=int, help='if to be run locally',             required=False, default=0)
     parser.add_argument('-t', '--toys',    type=int, help="number of toys to be processed",   required=False, default = 100)
     parser.add_argument('-r', '--run',     type=str, help="run number",                       required=False, default = "0054")
+    parser.add_argument('-o', '--out',     type=str, help="output directory label",           required=False, default = "")
+
+
     args     = parser.parse_args()
     ntoys    = args.toys
     pyscript = args.pyscript
@@ -96,7 +99,7 @@ if __name__ == '__main__':
 
     pyscript_str = pyscript.replace('.py', '')
     pyscript_str = pyscript_str.replace('_', '/')
-    config_json["output_directory"] = OUTPUT_DIRECTORY+'/'+run_num+'/'+ID
+    config_json["output_directory"] = OUTPUT_DIRECTORY+'/'+run_num+"_"+args.out+'/'+ID
     if not os.path.exists(config_json["output_directory"]):
         os.makedirs(config_json["output_directory"])
 

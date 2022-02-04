@@ -25,7 +25,7 @@ def read_data(file_name, n_data):
 
 def read_data_cut(file_name, n_data, theta1 = None, theta2 = None):
     """reads data file and perform cuts on theta"""
-    Reader = modules.DataReader.DataReader(filename=file_name)
+    Reader = DataReader(filename=file_name)
     df_cut = Reader.cut_theta(ndata=n_data, theta1=theta1, theta2=theta2)
     return df_cut
 
@@ -104,20 +104,18 @@ if N_Sig:
     N_Sig_Pois = np.random.poisson(lam=N_Sig*np.exp(Norm), size=1)[0]
 
 # featureData = np.random.exponential(scale=np.exp(1*Scale), size=(N_Bkg_Pois, 1))
-if theta1 or theta2:
-    featureData = read_data_cut(file_name=DATA_FOLDER+DATA_FILE, n_data=N_Bkg_Pois, theta1=theta1, theta2=theta2)
-else:
-    featureData = read_data(file_name=DATA_FOLDER+DATA_FILE, n_data=N_Bkg_Pois)
+print("\nreading data...")
+featureData = read_data_cut(file_name=DATA_FOLDER+DATA_FILE, n_data=N_Bkg_Pois, theta1=theta1, theta2=theta2)
+
 
 if N_Sig:
     featureSig  = np.random.normal(loc=6.4, scale=0.16, size=(N_Sig_Pois,1))*np.exp(Scale)
     featureData = np.concatenate((featureData, featureSig), axis=0)
 
 # featureRef = np.random.exponential(scale=np.exp(1*Scale), size=(N_ref, 1))
-if theta1 or theta2:
-    featureRef  = read_data_cut(file_name=DATA_FOLDER+REFERENCE_FILE, n_data=N_ref, theta1=theta1, theta2=theta2)
-else:
-    featureRef  = read_data(file_name=DATA_FOLDER+REFERENCE_FILE, n_data=N_ref)
+print("\nreading reference...")
+featureRef  = read_data_cut(file_name=DATA_FOLDER+REFERENCE_FILE, n_data=N_ref, theta1=0, theta2=55)
+print("\n\n")
 
 feature     = np.concatenate((featureData, featureRef), axis=0)
 
