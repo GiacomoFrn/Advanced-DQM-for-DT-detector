@@ -55,7 +55,7 @@ class DataReader:
     
     
     
-    def cut_theta(self, ndata: int, theta1: float = None, theta2: float = None) -> pandas.DataFrame:
+    def cut_theta(self, ndata: int = 0, theta1: float = None, theta2: float = None) -> pandas.DataFrame:
         """
         Performs cuts on the theta observable 
         
@@ -72,6 +72,7 @@ class DataReader:
         # interval theta1 < theta < theta2
         if theta1 and theta2:
             df = self.df[(np.abs(self.df["theta"])>theta1) & (np.abs(self.df["theta"])<theta2)]
+<<<<<<< HEAD
             print(f"{theta1} < theta < {theta2}")
         # interval theta > theta1
         elif theta1 and not theta2:
@@ -83,11 +84,19 @@ class DataReader:
             print(f"theta < {theta2}")
         # no cut
         elif not theta1 and not theta2:
+=======
+        elif theta1:
+            df = self.df[np.abs(self.df["theta"])>theta1]
+        elif theta2:
+            df = self.df[np.abs(self.df["theta"])<theta2]
+        else:
+>>>>>>> d7bbfbcd4a7d87798d2587ab98edf5823b19cfe9
             df = self.df
             print("no cut performed")
             
-        df = df.sample(n=ndata)
-            
+        if ndata:
+            df = df.sample(n=ndata)
+
         return df[["drift_time", "theta"]] 
 
 
