@@ -72,28 +72,17 @@ class DataReader:
         # interval theta1 < theta < theta2
         if theta1 and theta2:
             df = self.df[(np.abs(self.df["theta"])>theta1) & (np.abs(self.df["theta"])<theta2)]
-<<<<<<< HEAD
             print(f"{theta1} < theta < {theta2}")
-        # interval theta > theta1
-        elif theta1 and not theta2:
-            df = self.df[np.abs(self.df["theta"])>theta1]
-            print(f"theta > {theta1}")
-        # interval theta < theta2
-        elif not theta1 and theta2:
-            df = self.df[np.abs(self.df["theta"])<theta2]
-            print(f"theta < {theta2}")
-        # no cut
-        elif not theta1 and not theta2:
-=======
         elif theta1:
             df = self.df[np.abs(self.df["theta"])>theta1]
+            print(f"theta > {theta1}")
         elif theta2:
             df = self.df[np.abs(self.df["theta"])<theta2]
+            print(f"theta < {theta2}")
         else:
->>>>>>> d7bbfbcd4a7d87798d2587ab98edf5823b19cfe9
             df = self.df
             print("no cut performed")
-            
+
         if ndata:
             df = df.sample(n=ndata)
 
