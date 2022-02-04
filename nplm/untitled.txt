@@ -1,0 +1,4 @@
+architecture 2 3 3 1
+weight clipping 1.8
+reference run 00541
+data run 0057

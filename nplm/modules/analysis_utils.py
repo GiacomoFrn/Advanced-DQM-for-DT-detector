@@ -147,7 +147,7 @@ def plot_1distribution(t, df, xmin=None, xmax=None, nbins=10, wclip=0, save=Fals
         else:
             if not file_name: file_name = '1distribution'
             else: file_name += '_1distribution'
-            fig.savefig(save_path+file_name+'.pdf', dpi = 300, facecolor='white')
+            fig.savefig(save_path+file_name+'.png', dpi = 300, facecolor='white')
     plt.show()
     return
 
@@ -250,7 +250,7 @@ def plot_percentiles(tvalues_check, df, patience=1000, wclip=None, ymax=None, ym
         else:
             if not file_name: file_name = 'percentiles'
             else: file_name += '_percentiles'
-            fig.savefig(save_path+file_name+'.pdf', dpi = 300, facecolor='white')
+            fig.savefig(save_path+file_name+'.png', dpi = 300, facecolor='white')
         
     plt.show()
     return
@@ -344,7 +344,7 @@ def plot_median(tvalues_check, df, patience=1000, wclip=None, ymax=None, ymin=No
         else:
             if not file_name: file_name = 'percentiles'
             else: file_name += '_percentiles'
-            fig.savefig(save_path+file_name+'.pdf', dpi = 300, facecolor='white')
+            fig.savefig(save_path+file_name+'.png', dpi = 300, facecolor='white')
         
     plt.show()
     return
