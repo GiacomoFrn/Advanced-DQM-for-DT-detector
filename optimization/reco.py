@@ -134,8 +134,8 @@ def computeEvent(df_E):
             [event_reco_df, chamber_reco_df], axis=0, ignore_index=True
         )
 
-    if (event_reco_df is None):
-        return
+    if len(event_reco_df)==0:
+        return None
 
     return event_reco_df
 
@@ -154,6 +154,26 @@ def getRecoResults(events):
         event_reco_df = computeEvent(df_E)
         if event_reco_df is None:
             continue
+        if len(event_reco_df)==0:
+            continue
         resultsDf.append(event_reco_df)
+
+    return resultsDf
+
+# *****************************************************************************
+# MULTIPROCESSING
+# *****************************************************************************
+from multiprocessing import Pool, cpu_count
+
+def getRecoResults_mp(events):
+    
+    pool = Pool(processes=cpu_count()-2)
+    events = [x for x in events if len(x) <= 32]
+  
+    result = pool.map_async(computeEvent, events)
+    resultsDf = result.get()
+    pool.close()
+    pool.join()
+    resultsDf = [x for x in resultsDf if x is not None]
 
     return resultsDf
