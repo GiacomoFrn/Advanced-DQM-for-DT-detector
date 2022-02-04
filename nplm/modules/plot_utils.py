@@ -5,6 +5,11 @@ from matplotlib.ticker import ScalarFormatter
 import scipy.stats
 
 
+TITLESIZE = 28
+LABELSIZE = 24
+FIGSIZE   = (10,6)
+
+
 def change_legend(ax, new_loc, fontsize, titlesize, **kws):
     '''funzione per modificare posizione e font size della legenda generata da seaborn'''
     old_legend = ax.legend_
@@ -28,18 +33,29 @@ def plot_full_dataset(df, features, bins):
     dt_bins     = bins[0]
     theta_bins  = bins[1]
     
-    fig, ax = plt.subplots(ncols=2, figsize=(18,8))
+    fig, ax = plt.subplots(ncols=2, figsize=(14,6), sharey=True)
     
-    ax[0].set_title("time box")
-    ax[0].set_xlabel("drift time (ns)")
-    ax[0].set_ylabel("counts")
+    ax[0].set_title("time box",           fontsize=TITLESIZE)
+    ax[0].set_xlabel("drift time (ns)",   fontsize=LABELSIZE)
+    ax[0].set_ylabel("counts",            fontsize=LABELSIZE)
     
-    ax[1].set_title("theta distribution")
-    ax[1].set_xlabel("theta (deg)")
-    ax[1].set_ylabel("counts")
+    ax[1].set_title("theta distribution", fontsize=TITLESIZE)
+    ax[1].set_xlabel("theta (deg)",       fontsize=LABELSIZE)
+    # ax[1].set_ylabel("counts",            fontsize=LABELSIZE)
     
     ax[0].set_xlim(dt_bins[0], dt_bins[-1])
     ax[1].set_xlim(theta_bins[0], theta_bins[-1])
+    
+    # exponential y ticks
+    ax[0].yaxis.set_major_formatter(ScalarFormatter(useMathText=True))
+    ax[0].ticklabel_format(axis = "y", style = "sci", scilimits = (0,0))
+    ax[0].yaxis.get_offset_text().set_fontsize(22)
+    ax[1].yaxis.set_major_formatter(ScalarFormatter(useMathText=True))
+    ax[1].ticklabel_format(axis = "y", style = "sci", scilimits = (0,0))
+    ax[1].yaxis.get_offset_text().set_fontsize(22)
+    
+    ax[0].tick_params(axis="both", which="major", labelsize=22, length=5)
+    ax[1].tick_params(axis="both", which="major", labelsize=22, length=5)
     
     # drift time distribution
     sns.histplot(
@@ -71,11 +87,6 @@ def plot_full_dataset(df, features, bins):
         ax        = ax[1]
     )
     
-    # exponential y ticks
-    ax[0].yaxis.set_major_formatter(ScalarFormatter(useMathText=True))
-    ax[0].ticklabel_format(axis = 'y', style = 'sci', scilimits = (0,0))
-    ax[1].yaxis.set_major_formatter(ScalarFormatter(useMathText=True))
-    ax[1].ticklabel_format(axis = 'y', style = 'sci', scilimits = (0,0))
         
     return fig, ax
     
@@ -140,9 +151,6 @@ def plot_full_scatter(df, features):
         label="reg"
     )
     
-    ax.xaxis.set_major_formatter(ScalarFormatter(useMathText=True))
-    ax.yaxis.set_major_formatter(ScalarFormatter(useMathText=True))
-    ax.ticklabel_format(axis = 'both', style = 'sci', scilimits = (0,0))
     
     df.drop(labels="bin", axis=1, inplace=True)
     
@@ -159,18 +167,30 @@ def plot_full_dataset_2(ref, data, features, bins, weights):
     weightsRef  = weights[0]
     weightsData = weights[1]
     
-    fig, ax = plt.subplots(ncols=2, figsize=(18,8))
+    fig, ax = plt.subplots(ncols=2, figsize=(16,8), sharey=True)
     
-    ax[0].set_title("time box")
-    ax[0].set_xlabel("drift time (ns)")
-    ax[0].set_ylabel("counts")
+    ax[0].set_title("time box",           fontsize=TITLESIZE)
+    ax[0].set_xlabel("drift time (ns)",   fontsize=LABELSIZE)
+    ax[0].set_ylabel("counts",            fontsize=LABELSIZE)
     
-    ax[1].set_title("theta distribution")
-    ax[1].set_xlabel("theta (deg)")
-    ax[1].set_ylabel("counts")
+    ax[1].set_title("theta distribution", fontsize=TITLESIZE)
+    ax[1].set_xlabel("theta (deg)",       fontsize=LABELSIZE)
+    # ax[1].set_ylabel("counts",            fontsize=LABELSIZE)
     
     ax[0].set_xlim(dt_bins[0], dt_bins[-1])
     ax[1].set_xlim(theta_bins[0], theta_bins[-1])
+    
+    # exponential y ticks
+    ax[0].yaxis.set_major_formatter(ScalarFormatter(useMathText=True))
+    ax[0].ticklabel_format(axis = "y", style = "sci", scilimits = (0,0))
+    ax[0].yaxis.get_offset_text().set_fontsize(22)
+    ax[1].yaxis.set_major_formatter(ScalarFormatter(useMathText=True))
+    ax[1].ticklabel_format(axis = "y", style = "sci", scilimits = (0,0))
+    ax[1].yaxis.get_offset_text().set_fontsize(22)
+    
+    ax[0].tick_params(axis="both", which="major", labelsize=22, length=5)
+    ax[1].tick_params(axis="both", which="major", labelsize=22, length=5)
+    
     
     
     ax[0].hist(
@@ -226,17 +246,12 @@ def plot_full_dataset_2(ref, data, features, bins, weights):
         alpha=1, 
         label="data"
     )
-    
-    # exponential y ticks
-    ax[0].yaxis.set_major_formatter(ScalarFormatter(useMathText=True))
-    ax[0].ticklabel_format(axis = 'y', style = 'sci', scilimits = (0,0))
-    ax[1].yaxis.set_major_formatter(ScalarFormatter(useMathText=True))
-    ax[1].ticklabel_format(axis = 'y', style = 'sci', scilimits = (0,0))
-    
+
+    # legend    
     ax[0].legend()
     ax[1].legend()
-    change_legend(ax=ax[0], new_loc="upper right", fontsize=14, titlesize=0)
-    change_legend(ax=ax[1], new_loc="upper right", fontsize=14, titlesize=0)
+    change_legend(ax=ax[0], new_loc="upper right", fontsize=LABELSIZE, titlesize=0)
+    change_legend(ax=ax[1], new_loc="upper right", fontsize=LABELSIZE, titlesize=0)
         
     return fig, ax
 
@@ -253,7 +268,7 @@ def plot_ref_data_1(ref, data, features, bins, weights):
     weightsRef  = weights[0]
     weightsData = weights[1]
     
-    fig, ax = plt.subplots(ncols=2, figsize=(18,8))
+    fig, ax = plt.subplots(ncols=2, figsize=(14,6), sharey=True)
     
     ax[0].set_title("time box")
     ax[0].set_xlabel("drift time (ns)")
@@ -328,7 +343,7 @@ def plot_ref_data_1(ref, data, features, bins, weights):
     
     ax[0].legend()
     ax[1].legend()
-    change_legend(ax=ax[0], new_loc="upper right", fontsize=14, titlesize=0)
-    change_legend(ax=ax[1], new_loc="upper right", fontsize=14, titlesize=0)
+    change_legend(ax=ax[0], new_loc="upper right", fontsize=LABELSIZE, titlesize=0)
+    change_legend(ax=ax[1], new_loc="upper right", fontsize=LABELSIZE, titlesize=0)
     
     return fig, ax
