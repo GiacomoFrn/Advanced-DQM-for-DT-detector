@@ -74,13 +74,13 @@ def buildDataframe(df_fname, cfg, MULTIPROCESSING):
     for df_ in resultsDf:
         df_["D_WIRE_HIT"]= df_["X"]-df_["WIRE_X_GLOB"]
         df_ = df_[KEEP]
-        df = pd.concat([df, df_], axis=0, ignore_index=True)
+    df = pd.concat(resultsDf, axis=0, ignore_index=True)
     
     # add a sequential channel tag
     df.loc[(df["FPGA"] == 0), "CH"] = df["TDC_CHANNEL"]
     df.loc[(df["FPGA"] == 1), "CH"] = df["TDC_CHANNEL"] + 128
-    df_ = df.drop(["FPGA", "TDC_CHANNEL"], axis=1)
-    df_["CH"] = df_["CH"].astype(np.uint32)
+    df_ = df.drop(["FPGA", "TDC_CHANNEL"], axis=1) # why a new df?
+    df_["CH"] = df_["CH"].astype(np.uint8)
 
     # clean dataset
     df = df_[["CH", "HIT_DRIFT_TIME",'D_WIRE_HIT', "m"]]
@@ -89,6 +89,10 @@ def buildDataframe(df_fname, cfg, MULTIPROCESSING):
 
     # rad to deg conversion
     df["THETA"] = np.arctan(df["m"]) * 180.0 / math.pi
+
+    # create sl column
+    df["SL"] = df["ch"]//64
+    df["SL"][df["SL"]<2] = [int(not x) for x in df["SL"]]
 
     print("Dataframe ready!")
 
@@ -102,9 +106,10 @@ def saveChannels(df, OUTPUT_PATH, RUNNUMBER):
 
     print("Saving data...")
     channels = []
-    for channel in np.unique(df["CH"]):
-        channels.append(df[df["CH"] == channel])
-        df[df["CH"] == channel].to_hdf(save_to, key=f"ch{channel}", mode="a")
+    for sl in np.unique(df["SL"]):
+        for channel in np.unique(df[df["SL"] == sl]["CH"]):
+            channels.append(df[df["CH"] == channel]) # ci serve salvarlo?
+            df[df["SL"] == sl][df["CH"] == channel].to_hdf(save_to, key=f"sl{sl}/ch{channel}", mode="a")
 
     return channels
 
