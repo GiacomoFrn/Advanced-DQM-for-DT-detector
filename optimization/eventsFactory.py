@@ -72,10 +72,7 @@ def usingTrigger(stream_df, hits_df_, cfg):
 
 
 def computeEvents(hits_df_):
-    events = []
-    for x in pd.unique(hits_df_.ORBIT_CNT):
-        events.append(hits_df_[hits_df_["ORBIT_CNT"] == x])
-        events[-1] = events[-1].reset_index(drop=True)
+    events = [hits_df_[hits_df_["ORBIT_CNT"] == x] for x in pd.unique(hits_df_.ORBIT_CNT)]
     return events
 
 
@@ -85,6 +82,8 @@ def getEvents(df_fname, cfg, runTimeShift, useTrigger):
     dtype_dict = { 'HEAD':np.uint8, 'FPGA':np.uint8, 'TDC_CHANNEL':np.uint8, 'ORBIT_CNT':np.uint64, 'BX_COUNTER':np.uint16, 'TDC_MEAS':np.uint8 }
     print("Reading dataset from file...")
     stream_df = pd.read_csv(df_fname, dtype=dtype_dict)
+    #drop NaN
+    stream_df.dropna(inplace=True)
 
     # create a dataframe with only valid hits ->
     # trigger words and scintillator hits are removed
@@ -93,9 +92,7 @@ def getEvents(df_fname, cfg, runTimeShift, useTrigger):
         (stream_df.TDC_CHANNEL <= 127)
         ]
     
-    #drop NaN
-    hits_df = hits_df.dropna()
-
+    
     # select all orbits with a trigger signal from
     # the scintillators coincidence
     trigger_df = stream_df[
