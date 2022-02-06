@@ -73,7 +73,7 @@ def usingTrigger(stream_df, hits_df_, cfg):
 
 def computeEvents(hits_df_):
     events = [group for _, group in hits_df_.groupby("ORBIT_CNT") if len(group) <= 32]
-    #events = [hits_df_[hits_df_["ORBIT_CNT"] == x] for x in pd.unique(hits_df_.ORBIT_CNT)]
+    
     return events
 
 
