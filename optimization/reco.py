@@ -149,8 +149,6 @@ def getRecoResults(events):
     resultsDf = []
 
     for df_E in events:
-        if len(df_E) > 32:
-            continue
         event_reco_df = computeEvent(df_E)
         if event_reco_df is None:
             continue
@@ -168,7 +166,6 @@ from multiprocessing import Pool, cpu_count
 def getRecoResults_mp(events):
     
     pool = Pool(processes=cpu_count()-2)
-    events = [x for x in events if len(x) <= 32]
   
     result = pool.map_async(computeEvent, events)
     resultsDf = result.get()
