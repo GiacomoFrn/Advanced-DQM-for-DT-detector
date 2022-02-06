@@ -149,8 +149,6 @@ def getRecoResults(events):
     resultsDf = []
 
     for df_E in events:
-        if len(df_E) > 32:
-            continue
         event_reco_df = computeEvent(df_E)
         if event_reco_df is None:
             continue
