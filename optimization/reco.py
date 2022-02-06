@@ -166,7 +166,6 @@ from multiprocessing import Pool, cpu_count
 def getRecoResults_mp(events):
     
     pool = Pool(processes=cpu_count()-2)
-    events = [x for x in events if len(x) <= 32]
   
     result = pool.map_async(computeEvent, events)
     resultsDf = result.get()
