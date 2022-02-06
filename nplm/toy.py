@@ -1,5 +1,6 @@
 import sys, os, time, datetime, h5py, json, argparse
 import numpy as np
+import pandas as pd
 from scipy.stats import norm, expon, chi2, uniform, chisquare
 
 import matplotlib as mpl
@@ -29,7 +30,36 @@ def read_data_cut(file_name, n_data, theta1 = None, theta2 = None):
     df_cut = Reader.cut_theta(ndata=n_data, theta1=theta1, theta2=theta2)
     return df_cut
 
-
+#def compute_centers(bin_edges):
+#    return 0.5 * (bin_edges[1:]+bin_edges[:-1])
+#
+#
+#def binning(df, nbins_1, nbins_2 = None):
+#    
+#    if not nbins_2:
+#        nbins_2 = nbins_1
+#        
+#    bins1 = np.linspace(-90, 490, nbins_1)
+#    bins2 = np.linspace(-55,  55, nbins_2)
+#
+#        
+#    h1, e1 = np.histogram(df.drift_time, bins=bins1)
+#    h2, e2 = np.histogram(df.theta,      bins=bins2)
+#    
+#    c1 = compute_centers(e1)
+#    c2 = compute_centers(e2)
+#    
+#    h1 = np.expand_dims(h1, 1)
+#    h2 = np.expand_dims(h2, 1)
+#    c1 = np.expand_dims(c1, 1)
+#    c2 = np.expand_dims(c2, 1)
+#    
+#    feature = np.concatenate((c1,c2),axis=1) # feature
+#    weights = np.concatenate((h1,h2),axis=1) # weights
+#    
+#    return feature, weights
+    
+    
 parser = argparse.ArgumentParser()    
 parser.add_argument('-j', '--jsonfile', type=str, help="json file",  required=True)
 parser.add_argument('-r', '--run',      type=str, help="run number", required=True)
@@ -37,7 +67,7 @@ args = parser.parse_args()
 
 DATA_FOLDER = "/lustre/cmswork/nlai/lcp-moda/data/"
 DATA_FILE   = f"RUN00{args.run}_channels.h5"
-REFERENCE_FILE = "RUN000054_channels.h5"
+REFERENCE_FILE = "reference.csv"
 
 #### set up parameters ###############################
 with open(args.jsonfile, 'r') as jsonfile:
@@ -106,6 +136,7 @@ if N_Sig:
 # featureData = np.random.exponential(scale=np.exp(1*Scale), size=(N_Bkg_Pois, 1))
 print("\nreading data...")
 featureData = read_data_cut(file_name=DATA_FOLDER+DATA_FILE, n_data=N_Bkg_Pois, theta1=theta1, theta2=theta2)
+#featureData, weightsData = binning(featureData, 3000)
 
 
 if N_Sig:
@@ -114,20 +145,23 @@ if N_Sig:
 
 # featureRef = np.random.exponential(scale=np.exp(1*Scale), size=(N_ref, 1))
 print("\nreading reference...")
-featureRef  = read_data_cut(file_name=DATA_FOLDER+REFERENCE_FILE, n_data=N_ref, theta1=0, theta2=55)
+featureRef  = pd.read_csv("reference.csv", index_col=0)
+#featureRef, weightsRef = binning(featureRef, 120000)
+#weightsRef = weightsRef * (N_D*1./N_R)
 print("\n\n")
 
 feature     = np.concatenate((featureData, featureRef), axis=0)
 
 # target     
 
-# targetData  = np.ones_like(featureData)
-# targetRef   = np.zeros_like(featureRef)
+#targetData  = np.ones_like(featureData)
+#targetRef   = np.zeros_like(featureRef)
 # weightsData = np.ones_like(featureData)
 # weightsRef  = np.ones_like(featureRef)*N_D*1./N_R
 # target      = np.concatenate((targetData, targetRef), axis=0)
 # weights     = np.concatenate((weightsData, weightsRef), axis=0)
 # target      = np.concatenate((target, weights), axis=1)
+
 targetData  = np.ones(featureData.shape[0])
 targetRef   = np.zeros(featureRef.shape[0])
 weightsData = np.ones(featureData.shape[0])

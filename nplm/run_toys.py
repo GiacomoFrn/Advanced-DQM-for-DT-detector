@@ -18,7 +18,7 @@ def create_config_file(config_table, OUTPUT_DIRECTORY):
 # configuration dictionary
 config_json = {
     "N_Ref"   : 200000,
-    "N_Bkg"   : 10000,
+    "N_Bkg"   : 5000,
     "N_Sig"   : 0,
     "output_directory": OUTPUT_DIRECTORY,
     "shape_nuisances_id":        [''],
@@ -33,11 +33,11 @@ config_json = {
     "patience_tau": 1000,
     "epochs_delta": 0,
     "patience_delta": 0,
-    "BSMarchitecture": [2,3,3,1],
-    "BSMweight_clipping": 1.8, 
+    "BSMarchitecture": [2,4,4,4,1],
+    "BSMweight_clipping": 5, 
     "correction": "", # "SHAPE", "NORM", ""
-    "theta1": 5,    # 0
-    "theta2": 45,    # 55
+    "theta1": 0,    # 0
+    "theta2": 55,    # 55
 }
 
 # list process normalization generation values from shape uncertainties generation values
