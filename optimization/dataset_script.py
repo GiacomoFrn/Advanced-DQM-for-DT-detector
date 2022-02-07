@@ -104,13 +104,12 @@ def saveChannels(df, OUTPUT_PATH, RUNNUMBER):
     save_to = OUTPUT_PATH + FILE_NAME
 
     print("Saving data...")
-    channels = []
-    for sl in np.unique(df["SL"]):
-        for channel in np.unique(df[df["SL"] == sl]["CH"]):
-            channels.append(df[df["CH"] == channel]) 
-            df[df["SL"] == sl][df["CH"] == channel].to_hdf(save_to, key=f"sl{sl}/ch{channel}", mode="a")
 
-    return channels
+    for sl in np.unique(df["SL"]):
+        for channel in np.unique(df[df["SL"] == sl]["CH"]): 
+            df[(df["SL"] == sl) & (df["CH"] == channel)].to_hdf(save_to, key=f"sl{sl}/ch{channel}", mode="a")
+
+    return
 
 
 def main(args):
@@ -133,7 +132,7 @@ def main(args):
         cfg = yaml.safe_load(f)
 
     df = buildDataframe(data_file, cfg, MULTIPROCESSING)
-    channels = saveChannels(df, OUTPUT_PATH, RUNNUMBER)
+    saveChannels(df, OUTPUT_PATH, RUNNUMBER)
 
     return
 
