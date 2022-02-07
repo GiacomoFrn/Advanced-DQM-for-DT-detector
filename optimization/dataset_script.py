@@ -29,7 +29,7 @@ from reco import getRecoResults, getRecoResults_mp
 """
 
 # CONSTANTS
-USE_TRIGGER = False
+#USE_TRIGGER = False
 RUN_TIME_SHIFT = 0
 KEEP = ["FPGA", "TDC_CHANNEL", "HIT_DRIFT_TIME", "D_WIRE_HIT", "m"]
 
@@ -59,9 +59,8 @@ def buildDataframe(df_fname, cfg, MULTIPROCESSING):
 
     df = pd.DataFrame()
 
-    # reco (da sistemare getEvents e getRecoResults)
     print("Getting events...")
-    events = getEvents(df_fname, cfg, RUN_TIME_SHIFT, USE_TRIGGER)
+    events = getEvents(df_fname, cfg, RUN_TIME_SHIFT)
     print("Reconstructing tracks...")
     if MULTIPROCESSING:
         print("Using multiprocessing...")
@@ -79,7 +78,7 @@ def buildDataframe(df_fname, cfg, MULTIPROCESSING):
     # add a sequential channel tag
     df.loc[(df["FPGA"] == 0), "CH"] = df["TDC_CHANNEL"]
     df.loc[(df["FPGA"] == 1), "CH"] = df["TDC_CHANNEL"] + 128
-    df_ = df.drop(["FPGA", "TDC_CHANNEL"], axis=1) # why a new df?
+    df_ = df.drop(["FPGA", "TDC_CHANNEL"], axis=1) 
     df_["CH"] = df_["CH"].astype(np.uint8)
 
     # clean dataset
@@ -91,7 +90,7 @@ def buildDataframe(df_fname, cfg, MULTIPROCESSING):
     df["THETA"] = np.arctan(df["m"]) * 180.0 / math.pi
 
     # create sl column
-    df["SL"] = df["ch"]//64
+    df["SL"] = df["CH"]//64
     df["SL"][df["SL"]<2] = [int(not x) for x in df["SL"]]
 
     print("Dataframe ready!")
@@ -108,7 +107,7 @@ def saveChannels(df, OUTPUT_PATH, RUNNUMBER):
     channels = []
     for sl in np.unique(df["SL"]):
         for channel in np.unique(df[df["SL"] == sl]["CH"]):
-            channels.append(df[df["CH"] == channel]) # ci serve salvarlo?
+            channels.append(df[df["CH"] == channel]) 
             df[df["SL"] == sl][df["CH"] == channel].to_hdf(save_to, key=f"sl{sl}/ch{channel}", mode="a")
 
     return channels
