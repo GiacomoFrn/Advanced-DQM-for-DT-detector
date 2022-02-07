@@ -1,0 +1,3 @@
+correlations_eda_54_new.ipynb
+- chi2 : compute ndf and pvalue
+- chi2 : correct formula (it is the sum of squares not the squared sum!)
