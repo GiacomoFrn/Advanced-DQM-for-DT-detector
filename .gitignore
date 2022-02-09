@@ -20,6 +20,10 @@ __pycache__/
 # C extensions
 *.so
 
+# Speech
+speech.md
+speech.html
+
 # Distribution / packaging
 .Python
 build/

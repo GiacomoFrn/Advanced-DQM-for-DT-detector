@@ -21,63 +21,13 @@ def map_hit_position(hits_df_, local=False):
 
     return hits_df_
 
-
-def usingTrigger(stream_df, hits_df_, cfg):
-    # select all orbits with a trigger signal from
-    # the FPGA , saving also trigger angle and position
-    trigger_df_ = stream_df[
-        (stream_df["HEAD"] == cfg["headers"]["t0_trg"]) & (stream_df["FPGA"] == 0)
-    ].copy()
-
-    triggerAngle_df = stream_df[
-        (stream_df["HEAD"] == 4) & (stream_df["FPGA"] == 0)
-    ].copy()
-
-    triggerPosition_df = stream_df[
-        (stream_df["HEAD"] == 5) & (stream_df["FPGA"] == 0)
-    ].copy()
-
-    trigger_df_["T_T0"] = (
-        trigger_df_["BX_COUNTER"] * 25 + trigger_df_["TDC_MEAS"] * 25 / 30
-    )
-
-    triggerAngle_df.rename(columns={"TDC_MEAS": "T_ANGLE"}, inplace=True)
-
-    trigger_df_ = pd.merge(
-        trigger_df_,
-        triggerAngle_df[["ORBIT_CNT", "T_ANGLE"]],
-        left_on="ORBIT_CNT",
-        right_on="ORBIT_CNT",
-        suffixes=(None, None),
-    )
-
-    triggerPosition_df.rename(columns={"TDC_MEAS": "T_POSITION"}, inplace=True)
-    trigger_df_ = pd.merge(
-        trigger_df_,
-        triggerPosition_df[["ORBIT_CNT", "T_POSITION"]],
-        left_on="ORBIT_CNT",
-        right_on="ORBIT_CNT",
-        suffixes=(None, None),
-    )
-
-    hits_df_ = pd.merge(
-        hits_df_,
-        trigger_df_[["ORBIT_CNT", "T_T0", "T_ANGLE", "T_POSITION"]],
-        left_on="ORBIT_CNT",
-        right_on="ORBIT_CNT",
-        suffixes=(None, None),
-    )
-
-    return hits_df_
-
-
 def computeEvents(hits_df_):
     events = [group for _, group in hits_df_.groupby("ORBIT_CNT") if len(group) <= 32]
     
     return events
 
 
-def getEvents(df_fname, cfg, runTimeShift, useTrigger):
+def getEvents(df_fname, cfg, runTimeShift):
     
     #reading df from file
     dtype_dict = { 'HEAD':np.uint8, 'FPGA':np.uint8, 'TDC_CHANNEL':np.uint8, 'ORBIT_CNT':np.uint64, 'BX_COUNTER':np.uint16, 'TDC_MEAS':np.uint8 }
@@ -116,10 +66,6 @@ def getEvents(df_fname, cfg, runTimeShift, useTrigger):
     del hits_df
     # print the number of valid hits found in data
     print(f"Valid hits: {hits_df_.shape[0]}")
-
-    # if true consider only the hits in the same orbit of a scint trigger AND FPGA trigger signals
-    if (useTrigger == True):
-        hits_df_ = usingTrigger(stream_df=stream_df, hits_df_=hits_df_, cfg=cfg)
 
     del stream_df
     # create mapping with the loaded configurations
