@@ -1,5 +1,7 @@
 import os
 import h5py
+import glob
+import json
 import numpy as np
 import pandas as pd
 import scipy.stats
@@ -8,9 +10,15 @@ import seaborn as sns
 from matplotlib.ticker import ScalarFormatter
 from matplotlib.ticker import FormatStrFormatter
 
+from NPLM.PLOTutils import *
+from NPLM.ANALYSISutils import *
+from NPLM.NNutils import *
+
+FIG_SIZE = (12,7)
+
 
 def change_legend(ax, new_loc, fontsize, titlesize, **kws):
-    '''funzione per modificare posizione e font size della legenda generata da seaborn'''
+    """function to easily cutomize legends"""
 
     old_legend = ax.legend_
     handles = old_legend.legendHandles
@@ -21,11 +29,29 @@ def change_legend(ax, new_loc, fontsize, titlesize, **kws):
               fontsize=fontsize, title_fontsize=titlesize, 
               frameon = True, fancybox = False, framealpha = 0.5, **kws)
 
-    return
+
+def smoothen(tvalues_check, threshold=3):
+    """function that fixes weird history trends"""
+    thrs = threshold
+    tvalues_check = tvalues_check.copy()
+    for toy in tvalues_check:
+        for i, epoch_check in enumerate(toy):
+            if not i:
+                continue
+            if i>=toy.shape[0]-1:
+                break
+            if np.abs(toy[i]-toy[i-1]) > thrs and (np.abs(toy[i]-toy[i+1]) > thrs or np.abs(toy[i]-toy[i+2]) > thrs):
+                toy[i] = (toy[i-1]+toy[i+1])/2
+                i+=2
+        for i in range(toy.shape[0]-10, toy.shape[0]-1):
+            if np.abs(toy[i]-toy[-1])> thrs or np.abs(toy[i]-toy[i+1])> thrs:
+                toy[i] = (toy[i-1] + toy[-1])/2
+                    
+    return tvalues_check
     
     
 def t_median(t_list, dof):
-    '''calcolo la mediana per un rapido controllo di compatibilità'''
+    """function that computes the median of the t_list and its pvalue"""
     
     # calcolo la mediana della lista
     median_t = np.median(t_list)
@@ -47,19 +73,64 @@ def t_median(t_list, dof):
         Median significance: {scipy.stats.norm.ppf(1-scipy.stats.chi2.sf(median_t, df=dof)):.4f}\
         from chi2 distribution" 
     ) 
+
+
+def collect_weights(DIR_IN, suffix='weights'):
+    parameters = {}
+    init = False
+    for fileIN in glob.glob("%s/*_%s.h5" %(DIR_IN, suffix)):
+        f = h5py.File(fileIN, 'r')
+        for j in f:
+            for k in f.get(j):
+                for m in f.get(j).get(k):
+                    if not init:
+                        parameters[k+'_'+m[0]]= np.expand_dims(np.array(f.get(j).get(k).get(m)), axis=0)
+                    else:
+                        parameters[k+'_'+m[0]]= np.concatenate((parameters[k+'_'+m[0]], np.expand_dims(np.array(f.get(j).get(k).get(m)), axis=0)), axis=0)
+        f.close()
+        init=True
+        
+    return parameters
+
+
+def build_model(jsonfile):
+    with open(jsonfile, 'r') as jsonfile:
+        config_json = json.load(jsonfile)
+    correction = config_json["correction"]
+    NU_S, NUR_S, NU0_S, SIGMA_S = [0], [0], [0], [0]
+    NU_N, NUR_N, NU0_N, SIGMA_N = 0, 0, 0, 0
+    shape_dictionary_list = []
+    #### training time                
+    total_epochs_tau   = config_json["epochs_tau"]
+    patience_tau       = config_json["patience_tau"]
+    total_epochs_delta = config_json["epochs_delta"]
+    patience_delta     = config_json["patience_delta"]
+
+    #### architecture                
+    BSMweight_clipping = config_json["BSMweight_clipping"]
+    BSMarchitecture    = config_json["BSMarchitecture"]
+    inputsize          = BSMarchitecture[0]
+    BSMdf              = compute_df(input_size=BSMarchitecture[0], hidden_layers=BSMarchitecture[1:-1])
+    tau = imperfect_model(
+        input_shape=(None, inputsize),
+        NU_S=NU_S, NUR_S=NUR_S, NU0_S=NU0_S, SIGMA_S=SIGMA_S, 
+        NU_N=NU_N, NUR_N=NUR_N, NU0_N=NU0_N, SIGMA_N=SIGMA_N,
+        correction=correction, shape_dictionary_list=shape_dictionary_list,
+        BSMarchitecture=BSMarchitecture, BSMweight_clipping=BSMweight_clipping, train_f=True, train_nu=False
+    )
     
-    return
+    return tau
 
 
 def plot_1distribution(t, df, xmin=None, xmax=None, nbins=10, wclip=0, save=False, save_path=None, file_name=None):
-    '''
+    """
     Plot the histogram of a test statistics sample (t) and the target chi2 distribution. 
     The median and the error on the median are calculated in order to calculate the median Z-score and its error.
     
     t:  (numpy array shape (None,))
     df: (int) chi2 degrees of freedom
-    '''
-    fig, ax = plt.subplots(figsize=(10, 6))
+    """
+    fig, ax = plt.subplots(figsize=FIG_SIZE)
     
     XMIN = 0
     if xmin:
@@ -105,29 +176,29 @@ def plot_1distribution(t, df, xmin=None, xmax=None, nbins=10, wclip=0, save=Fals
         x=bin_edges[:-1], 
         weights=hist, 
         bins=bin_edges,
-        stat='count', 
-        element='bars', 
+        stat="count", 
+        element="bars", 
         linewidth=2,
         fill=True, 
-        color='lightblue', 
-        #color='#aadeff', 
-        edgecolor='#2c7fb8',
-        #edgecolor='#009cff', 
+        color="lightblue", 
+        #color="#aadeff", 
+        edgecolor="#2c7fb8",
+        #edgecolor="#009cff", 
         ax=ax, 
         label=label
     )
 
-    ax.errorbar(bincenters, hist, yerr=err, color='#2c7fb8', linewidth=2, marker='o', ls='')
+    ax.errorbar(bincenters, hist, yerr=err, color="#2c7fb8", linewidth=2, marker="o", ls="")
    
     # plot reference chi2
     x = np.linspace(scipy.stats.chi2.ppf(0.0001, df), scipy.stats.chi2.ppf(0.9999, df), 100)
     ax.plot(
         x, 
         scipy.stats.chi2.pdf(x, df),
-        'midnightblue', 
+        "midnightblue", 
         lw=5, 
         alpha=0.8, 
-        label=r'Target $\chi^2$(ndf='+str(df)+')',
+        label=r"Target $\chi^2$(ndf="+str(df)+")",
         zorder=10
     )
     
@@ -135,56 +206,48 @@ def plot_1distribution(t, df, xmin=None, xmax=None, nbins=10, wclip=0, save=Fals
     ax.legend()
     change_legend(ax=ax, new_loc="upper right", fontsize=14, titlesize=0)
     
-    ax.set_title(f'Test statistic distribution', fontsize = 22)
-    ax.set_xlabel('t', fontsize = 18)
-    ax.set_ylabel(r'p(t | $\mathcal{R}$)', fontsize = 18)
+    ax.set_title(f"Test statistic distribution", fontsize = 22)
+    ax.set_xlabel("t", fontsize = 18)
+    ax.set_ylabel(r"p(t | $\mathcal{R}$)", fontsize = 18)
     ax.set_xlim(XMIN, XMAX)
     
-    ax.tick_params(axis = 'both', which = 'major', labelsize = 14, direction = 'out', length = 5)
+    ax.tick_params(axis = "both", which = "major", labelsize = 14, direction = "out", length = 5)
+    
+    ax.yaxis.set_major_formatter(ScalarFormatter(useMathText=True))
+    ax.ticklabel_format(axis = 'y', style = 'sci', scilimits = (0,0))
+    ax.yaxis.get_offset_text().set_fontsize(14)
+
+    fig.tight_layout()
     
     if save:
-        if not save_path: print('argument save_path is not defined. The figure will not be saved.')
+        if not save_path: print("argument save_path is not defined. The figure will not be saved.")
         else:
-            if not file_name: file_name = '1distribution'
-            else: file_name += '_1distribution'
-            fig.savefig(save_path+file_name+'.png', dpi = 300, facecolor='white')
+            if not file_name: file_name = "1distribution"
+            else: file_name += "_1distribution"
+            fig.savefig(save_path+file_name+".png", dpi = 300, facecolor="white")
     plt.show()
     return
 
-
     
 def plot_percentiles(tvalues_check, df, patience=1000, wclip=None, ymax=None, ymin=None, save=False, save_path=None, file_name=None, smooth=None):
-    '''
+    """
     The funcion creates the plot of the evolution in the epochs of the [2.5%, 25%, 50%, 75%, 97.5%] quantiles of the toy sample distribution.
     The percentile lines for the target chi2 distribution are shown as a reference.
     
     patience:      (int) interval between two check points (epochs).
     tvalues_check: (numpy array shape (N_toys, N_check_points)) array of t=-2*loss
     df:            (int) chi2 degrees of freedom
-    '''
+    """
     
-    thrs = 3
-    
-    tvalues_check = tvalues_check.copy()
     if smooth:
-        for toy in tvalues_check:
-            for i, epoch_check in enumerate(toy):
-                if not i:
-                    continue
-                if i>=toy.shape[0]-1:
-                    break
-                if np.abs(toy[i]-toy[i-1]) > thrs and (np.abs(toy[i]-toy[i+1]) > thrs or np.abs(toy[i]-toy[i+2]) > thrs):
-                    toy[i] = (toy[i-1]+toy[i+1])/2
-                    i+=2
-            for i in range(toy.shape[0]-10, toy.shape[0]-1):
-                if np.abs(toy[i]-toy[-1])> thrs or np.abs(toy[i]-toy[i+1])> thrs:
-                    toy[i] = (toy[i-1] + toy[-1])/2
+        tvalues_check = smoothen(tvalues_check)
     
     N_CHECKS = tvalues_check.shape[1]
     EPOCH_CHECK = [patience*(i+1) for i in range(N_CHECKS)]
     XMIN = 0
-    XMAX = N_CHECKS*patience*1.2
+    XMAX = N_CHECKS*patience
     YMIN = 0
+    
     if ymin:
         YMIN = ymin
     if tvalues_check[:,-1].max() >= 3*df:
@@ -194,15 +257,15 @@ def plot_percentiles(tvalues_check, df, patience=1000, wclip=None, ymax=None, ym
     if ymax:
         YMAX = ymax
             
-    color_list = ['seagreen', 'mediumseagreen', 'lightseagreen', '#2c7fb8', 'midnightblue']
-    # color_list = ['#00b32a', '#00c282', '#00D2FF', '#009cff', '#005e99']
+    color_list = ["seagreen", "mediumseagreen", "lightseagreen", "#2c7fb8", "midnightblue"]
+    # color_list = ["#00b32a", "#00c282", "#00D2FF", "#009cff", "#005e99"]
     quantile_list   = [0.05,0.25,0.50,0.75,0.95]
     quantile_labels = ["5%", "25%", "50%", "75%", "95%"]
     
     th_quantile_position = [scipy.stats.chi2.ppf(i, df=df) for i in quantile_list]
     t_quantile = np.quantile(tvalues_check, quantile_list, axis=0)
     
-    fig, ax = plt.subplots(figsize=(10, 6))
+    fig, ax = plt.subplots(figsize=FIG_SIZE)
     
     ax.set_xlim(XMIN, XMAX)
     ax.set_ylim(YMIN, YMAX)
@@ -212,316 +275,177 @@ def plot_percentiles(tvalues_check, df, patience=1000, wclip=None, ymax=None, ym
             EPOCH_CHECK, 
             t_quantile[i][:], 
             color = color_list[i], 
-            linestyle='solid', 
+            linestyle="solid", 
             linewidth = 3, 
-            label = format(quantile_list[i], '1.2f')
+            label = quantile_labels[i]
         )
         ax.hlines(
             y=th_quantile_position[i], 
             xmin = XMIN, 
             xmax = N_CHECKS*patience, 
             color = color_list[i], 
-            linestyle='dashed', 
+            linestyle="dashed", 
             linewidth = 3, 
             alpha = 0.5, 
-            label = 'theoretical ' + format(quantile_list[i], '1.2f')
+            label = "theoretical " + quantile_labels[i]
         )
-        ax.text(
-            N_CHECKS*patience*1.05, 
-            th_quantile_position[i], 
-            quantile_labels[i], 
-            horizontalalignment='left', 
-            verticalalignment='center', 
-            color=color_list[i],
-            fontsize=22,
-            transform=ax.transData
-        )
-        
-    # ax.legend(ncol=2, loc="upper right", fontsize=14)
+        #ax.text(
+        #    N_CHECKS*patience*1.05, 
+        #    th_quantile_position[i], 
+        #    quantile_labels[i], 
+        #    horizontalalignment="left", 
+        #    verticalalignment="center", 
+        #    color=color_list[i],
+        #    fontsize=22,
+        #    transform=ax.transData
+        #)
+        #
+    ax.legend(ncol=2, loc="lower left", fontsize=14, bbox_to_anchor=(1, 0.5))
     
-    ax.set_title(f'Percentiles evolution', fontsize = 22)
-    ax.set_xlabel('training epochs', fontsize = 18)
-    ax.set_ylabel(r't', fontsize = 18)
-    ax.tick_params(axis = 'both', which = 'major', labelsize = 14, direction = 'out', length = 5)
-    plt.setp(ax.get_xticklabels()[-1], visible=False)
+    ax.set_title(f"Percentiles evolution", fontsize = 22)
+    ax.set_xlabel("training epochs", fontsize = 18)
+    ax.set_ylabel(r"t", fontsize = 18)
+    ax.tick_params(axis = "both", which = "major", labelsize = 14, direction = "out", length = 5)
+    
+    #plt.setp(ax.get_xticklabels()[-1], visible=False)
+    
+    fig.tight_layout()
     
     if save:
-        if not save_path: print('argument save_path is not defined. The figure will not be saved.')
+        if not save_path: print("argument save_path is not defined. The figure will not be saved.")
         else:
-            if not file_name: file_name = 'percentiles'
-            else: file_name += '_percentiles'
-            fig.savefig(save_path+file_name+'.png', dpi = 300, facecolor='white')
+            if not file_name: file_name = "percentiles"
+            else: file_name += "_percentiles"
+            fig.savefig(save_path+file_name+".png", dpi = 300, facecolor="white")
         
     plt.show()
     return
-  
 
+
+def plot_reco(
+    df,
+    data,
+    weight_data,
+    ref,
+    weight_ref,
+    tau_obs,
+    tau_ref,
+    features,
+    bins_code,
+    xlabel_code, 
+    toy,
+    save=False, save_path=None, file_name=None
+):
+    """function that plots data reconstrution"""
     
-def plot_median(tvalues_check, df, patience=1000, wclip=None, ymax=None, ymin=None, save=False, save_path=None, file_name=None, smooth=None):
+    Zscore=scipy.stats.norm.ppf(scipy.stats.chi2.cdf(tau_obs, df))
+    
+    fig, ax = plt.subplots(
+        nrows=2, 
+        ncols=len(features), 
+        figsize=(18,10),
+        sharey="row",
+        sharex="col"
+    )
+    
+    fig.suptitle(f"t_obs={tau_obs:.2f}    Z={Zscore:.2f}", fontsize = 26)
+    recorow  = 0
+    ratiorow = 1
         
-    thrs = 3
+    for figcol, feature in enumerate(features):
 
-    tvalues_check = tvalues_check.copy()
-    if smooth:
-        for toy in tvalues_check:
-            for i, epoch_check in enumerate(toy):
-                if not i:
-                    continue
-                if i>=toy.shape[0]-1:
-                    break
-                if np.abs(toy[i]-toy[i-1]) > thrs and (np.abs(toy[i]-toy[i+1]) > thrs or np.abs(toy[i]-toy[i+2]) > thrs):
-                    toy[i] = (toy[i-1]+toy[i+1])/2
-                    i+=2
-            for i in range(toy.shape[0]-10, toy.shape[0]-1):
-                if np.abs(toy[i]-toy[-1])> thrs or np.abs(toy[i]-toy[i+1])> thrs:
-                    toy[i] = (toy[i-1] + toy[-1])/2
-    N_CHECKS = tvalues_check.shape[1]
-    EPOCH_CHECK = [patience*(i+1) for i in range(N_CHECKS)]
-    XMIN = 0
-    XMAX = N_CHECKS*patience
-    YMIN = 0
-    if ymin:
-        YMIN = ymin
-    if tvalues_check[:,-1].max() >= 3*df:
-        YMAX = tvalues_check[:,-1].max() + YMIN
-    else:
-        YMAX = 2*df
-    if ymax:
-        YMAX = ymax
+        
+        bins = bins_code[feature]
+        x = 0.5*(bins[1:]+bins[:-1])
+        
+        ################################### RECO
+        hR = ax[recorow][figcol].hist(
+            ref[feature],
+            weights=weight_ref,
+            bins=bins,
+            histtype="stepfilled", 
+            linewidth=3,
+            edgecolor="none", 
+            facecolor="#aadeff", 
+            label="REFERENCE",  
+            zorder=1
+        )
+        
+        hD = ax[recorow][figcol].hist(
+            data[feature],
+            weights=weight_data,
+            bins=bins,
+            histtype="step",
+            linewidth=2,
+            color="#009cff",
+            label="DATA", 
+            zorder=2
+        )  
+        
+        hN = ax[recorow][figcol].hist(
+            ref[feature],
+            weights=np.exp(tau_ref[:, 0])*weight_ref,
+            bins=bins,
+            histtype="step",
+            linewidth=2,
+            color="#45bf55",
+            label="RECO",  
+            zorder=3
+        )
+        
+        ax[recorow][figcol].legend()
+        change_legend(ax=ax[recorow][figcol], new_loc="upper right", fontsize=14, titlesize=0)
     
-    
-    median_history = np.median(tvalues_check, axis=0)
-    th_median = scipy.stats.chi2.median(df=df)
-    
-    median_pval = scipy.stats.chi2.sf(median_history, df=df)
-    final_pval = median_pval[-1]
-    median_Z = scipy.stats.norm.ppf(1-median_pval)
-    final_Z = median_Z[-1]
-    
-    th_std = scipy.stats.chi2.std(df=df)
-    d      = median_history[-1] - th_median
-    d_std  = d / th_std
-    
-    fig, ax = plt.subplots(figsize=(10, 6))
+        #ax[recorow][figcol].set_xlabel(xlabel_code[feature], fontsize = 18)
+        ax[recorow][0].set_ylabel("counts", fontsize = 18)
+        ax[recorow][figcol].set_xlim(bins[0], bins[-1])
 
-    ax.set_xlim(XMIN, XMAX)
-    ax.set_ylim(YMIN, YMAX)
-    
-    label  = f"final median = {median_history[-1]:.3f}\n"
-    label += f"p-value = {median_pval:.3f}\n"
-    label += f"Z ="
-    
-    ax.plot(
-        EPOCH_CHECK,
-        median_history,
-        color="#2c7fb8",
-        linestyle='solid', 
-        linewidth = 3, 
-        # label = ,
-    )
-    
-    ax.hlines(
-        y=th_median, 
-        xmin = XMIN, 
-        xmax = XMAX, 
-        color = 'midnightblue', 
-        linestyle='dashed', 
-        linewidth = 3, 
-        alpha = 0.5, 
-        label = f'theoretical median: {th_median:.3f}'
-    )
-    
-    ax.legend(loc="upper right", fontsize=14)
+        ax[recorow][figcol].tick_params(axis = "both", which = "major", labelsize = 14, direction = "out", length = 5)
 
-    ax.set_title(f'Median evolution', fontsize = 22)
-    ax.set_xlabel('training epochs', fontsize = 18)
-    ax.set_ylabel(r'$\tilde{t}$', fontsize = 18)
-    ax.tick_params(axis = 'both', which = 'major', labelsize = 14, direction = 'out', length = 5)
+        ax[recorow][figcol].yaxis.set_major_formatter(ScalarFormatter(useMathText=True))
+        ax[recorow][figcol].ticklabel_format(axis = 'y', style = 'sci', scilimits = (0,0))
+        ax[recorow][figcol].yaxis.get_offset_text().set_fontsize(14)
+        
+        
+        
+        ################################### RATIO
+        ax[ratiorow][figcol].plot(
+            x, 
+            (hD[0])/(hR[0]),
+            linewidth=3,
+            color="#009cff", 
+            alpha=1, 
+            label="DATA / REF"
+        )
+        ax[ratiorow][figcol].plot(
+            x, 
+            (hN[0])/(hR[0]),
+            linewidth=8,
+            color="#45bf55", 
+            alpha=1, 
+            label="RECO / REF"
+        )
+        
+        ax[ratiorow][figcol].legend()
+        change_legend(ax=ax[ratiorow][figcol], new_loc="upper right", fontsize=14, titlesize=0)
     
+        ax[ratiorow][figcol].set_xlabel(xlabel_code[feature], fontsize = 18)
+        ax[ratiorow][0].set_ylabel(r"$n\,(x\,|\,\mathcal{D})\,\,/\,\,n\,(x\,|\,\mathcal{R})$", fontsize = 18)
+        ax[ratiorow][figcol].set_xlim(bins[0], bins[-1])
+
+        ax[ratiorow][figcol].tick_params(axis = "both", which = "major", labelsize = 14, direction = "out", length = 5)
+
+        ax[ratiorow][figcol].yaxis.set_major_formatter(ScalarFormatter(useMathText=True))
+        ax[ratiorow][figcol].ticklabel_format(axis = 'y', style = 'sci', scilimits = (0,0))
+        ax[ratiorow][figcol].yaxis.get_offset_text().set_fontsize(14)
+          
+        
+    fig.tight_layout()
     
     if save:
-        if not save_path: print('argument save_path is not defined. The figure will not be saved.')
+        if not save_path: print("argument save_path is not defined. The figure will not be saved.")
         else:
-            if not file_name: file_name = 'percentiles'
-            else: file_name += '_percentiles'
-            fig.savefig(save_path+file_name+'.png', dpi = 300, facecolor='white')
-        
+            if not file_name: file_name = f"reco{toy}"
+            else: file_name += f"_reco{toy}"
+            fig.savefig(save_path+file_name+".png", dpi = 300, facecolor="white")
     plt.show()
-    return
-        
-        
-        
-    
-#     def plotMedianHistory(self):
-#         '''andamento della mediana'''
-        
-#         self.median_history = np.median(self.t_list_history, axis=0)
-        
-#         th_median = scipy.stats.chi2.median(df=self.dof)
-        
-#         XMIN = 0
-#         XMAX = self.epochs
-        
-#         YMIN = 0
-#         if max(self.median_history) >= 3*self.dof:
-#             YMAX = max(self.median_history) + min(self.median_history) 
-#         elif max(self.median_history) < 3*self.dof:
-#             YMAX = 3*self.dof
-            
-#         XLIM = [XMIN, XMAX]
-#         YLIM = [YMIN, YMAX]
-        
-#         fig, ax = plt.subplots(figsize=(12,7))
-        
-#         x_tics = np.array(range(self.epochs))
-#         x_tics = x_tics[x_tics % self.check_point_t == 0]
-        
-        
-#         ax.plot(x_tics[:],self.median_history[:], color='#009cff', linestyle='solid', linewidth=3, alpha=1, 
-#                 label=f'median final value: {self.median_history[-1]:.3f}')
-        
-#         ax.hlines(y=th_median, xmin = XMIN, xmax = XMAX, 
-#                       color = '#FF0000', linestyle='dashed', linewidth = 3, alpha = 0.5, 
-#                     label = f'theoretical median: {th_median:.3f}')
-        
-#         self.plotterLayout(ax=ax, xlimits=XLIM, ylimits=YLIM, title='median history', titlefont=18, xlabel='training epoch', ylabel='median', labelfont=16)
-        
-#         ax.legend()
-#         self.change_legend(ax=ax, new_loc="upper right", fontsize=14, titlesize=16)
-    
-#         fig.tight_layout()
-#         if self.save_flag:
-#             fig.savefig(self.plotOutPath()+'_median_history.png', dpi = 300, facecolor='white')
-#         plt.show()
-#         return
-    
-    
-#     def plotMedianPval(self):
-#         '''andamento del pvalue della mediana'''
-        
-#         self.median_pval = scipy.stats.chi2.sf(self.median_history[:], df=self.dof)
-        
-#         XMIN = 0
-#         XMAX = self.epochs
-#         YMIN = 0
-#         YMAX = 1.2
-        
-#         XLIM = [XMIN, XMAX]
-# #         YLIM = [YMIN, YMAX]
-
-#         fig, ax = plt.subplots(figsize=(12,7))
-
-#         x_tics = np.array(range(self.epochs))
-#         x_tics = x_tics[x_tics % self.check_point_t == 0]
-# #         y_tics = np.array( np.arange(0, 1.1, 0.1) )
-        
-#         ax.plot(x_tics[10:], self.median_pval[10:], color='#009cff', linestyle='solid', linewidth=3, alpha=1, 
-#                 label=f'median p-val final value: {self.median_pval[-1]:.3f}')
-        
-#         self.plotterLayout(ax=ax, xlimits=XLIM, title='median p-value evolution', titlefont=18, xlabel='training epoch', ylabel='p-value', labelfont=16)
-# #         ax.set_yticks(y_tics)
-        
-#         ax.legend()
-#         self.change_legend(ax=ax, new_loc="upper right", fontsize=14, titlesize=16)
-        
-#         fig.tight_layout()
-#         if self.save_flag:
-#             fig.savefig(self.plotOutPath()+'_median_pvalue.png', dpi = 300, facecolor='white')
-#         plt.show()
-#         return
-    
-    
-#     def plotMedianZ(self):
-#         '''andamento della significanza della mediana'''
-        
-#         self.median_Z = np.abs(scipy.stats.norm.ppf(1-self.median_pval[:]))
-        
-#         XMIN = 0
-#         XMAX = self.epochs
-#         YMIN = 0
-#         YMAX = 1.2
-        
-#         XLIM = [XMIN, XMAX]
-# #         YLIM = [YMIN, YMAX]
-
-#         fig, ax = plt.subplots(figsize=(12,7))
-
-#         x_tics = np.array(range(self.epochs))
-#         x_tics = x_tics[x_tics % self.check_point_t == 0]
-# #         y_tics = np.array( np.arange(0, 1.1, 0.1) )
-        
-#         ax.plot(x_tics[10:], self.median_Z[10:], color='#009cff', linestyle='solid', linewidth=3, alpha=1, 
-#                 label=f'median Z final value: {self.median_Z[-1]:.3f}')
-        
-#         self.plotterLayout(ax=ax, xlimits=XLIM, title='median significance evolution', titlefont=18, xlabel='training epoch', ylabel='Z', labelfont=16)
-# #         ax.set_yticks(y_tics)
-        
-#         ax.legend()
-#         self.change_legend(ax=ax, new_loc="upper right", fontsize=14, titlesize=16)
-        
-#         fig.tight_layout()
-#         if self.save_flag:
-#             fig.savefig(self.plotOutPath()+'_median_significance.png', dpi = 300, facecolor='white')
-#         plt.show()
-#         return
-    
-    
-#     def ks_test_evo(self):
-        
-#         self.D_history = []
-#         self.D_pval_history = []
-#         for i in range(self.t_list_history.shape[1]):
-#             self.D, self.Dpval = scipy.stats.kstest(
-#                 rvs=self.t_list_history[:,i],
-#                 cdf="chi2",
-#                 args=(10, 0, 1)
-#             )
-#             self.D_history.append(self.D)
-#             self.D_pval_history.append(self.Dpval)
-        
-#         self.D_history = np.array(self.D_history)
-#         self.D_pval_history = np.array(self.D_pval_history)
-        
-#         XMIN = 0
-#         XMAX = self.epochs
-#         YMIN = 0
-#         YMAX = 1.2
-        
-#         XLIM = [XMIN, XMAX]
-        
-#         fig, ax = plt.subplots(figsize=(12,7))
-
-#         x_tics = np.array(range(self.epochs))
-#         x_tics = x_tics[x_tics % self.check_point_t == 0]
-        
-#         ax.plot(x_tics[10:], self.D_history[10:], color='#009cff', linestyle='solid', linewidth=3, alpha=1, 
-#                 label=f'D statistic final value: {self.D:.3f}')
-        
-#         self.plotterLayout(ax=ax, xlimits=XLIM, title='D statistic evolution', titlefont=18, xlabel='training epoch', ylabel='D', labelfont=16)
-        
-#         ax.legend()
-#         self.change_legend(ax=ax, new_loc="upper right", fontsize=14, titlesize=16)
-        
-#         fig.tight_layout()
-#         if self.save_flag:
-#             fig.savefig(self.plotOutPath()+'_D_evolution.png', dpi = 300, facecolor='white')
-#         plt.show()
-        
-#         fig, ax = plt.subplots(figsize=(12,7))
-
-       
-        
-#         ax.plot(x_tics[10:], self.D_pval_history[10:], color='#009cff', linestyle='solid', linewidth=3, alpha=1, 
-#                 label=f'KS final pvalue: {self.Dpval:.3f}')
-        
-#         self.plotterLayout(ax=ax, xlimits=XLIM, title='KS p-value evolution', titlefont=18, xlabel='training epoch', ylabel='KS pval', labelfont=16)
-        
-#         ax.legend()
-#         self.change_legend(ax=ax, new_loc="upper right", fontsize=14, titlesize=16)
-        
-#         fig.tight_layout()
-#         if self.save_flag:
-#             fig.savefig(self.plotOutPath()+'_KSp_evolution.png', dpi = 300, facecolor='white')
-#         plt.show()
-        
-#         return
